@@ -1,19 +1,20 @@
 @import "tailwindcss";
+@source "../**/*.{ts,tsx}";
 
 :root {
   --surface-0: #0B1120;
   --surface-1: #111827;
   --surface-2: #1a2235;
   --surface-3: #232d42;
-  --accent: #60A5FA;
-  --accent-dim: #3b82f6;
+  --accent: #34D399;
+  --accent-dim: #10B981;
   --up: #34D399;
   --down: #F87171;
   --gold: #FBBF24;
   --text-primary: #f0ede6;
   --text-secondary: #94a3b8;
   --border: rgba(255, 255, 255, 0.06);
-  --glow: rgba(96, 165, 250, 0.15);
+  --glow: rgba(52, 211, 153, 0.15);
 }
 
 html {
@@ -66,7 +67,7 @@ body {
 }
 
 .card-glow:hover {
-  border-color: rgba(96, 165, 250, 0.2);
+  border-color: rgba(52, 211, 153, 0.2);
   box-shadow: 0 0 24px var(--glow);
 }
 
@@ -107,3 +108,55 @@ body {
 .pulse-dot {
   animation: pulse-dot 2s ease-in-out infinite;
 }
+
+/* Neon Auth dark mode overrides */
+.neon-auth-ui {
+  color-scheme: dark;
+}
+
+
+/* Neon Auth dropdown/modal styling */
+[data-slot="popover-content"],
+[data-slot="dropdown-menu-content"],
+[data-slot="dialog-content"],
+[role="dialog"],
+[data-radix-popper-content-wrapper] {
+  background: var(--surface-1) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 12px !important;
+  font-size: 13px !important;
+  color: var(--text-primary) !important;
+}
+
+[data-slot="popover-content"] *,
+[data-slot="dropdown-menu-content"] *,
+[data-slot="dialog-content"] *,
+[role="dialog"] * {
+  font-size: inherit !important;
+}
+
+[data-slot="dropdown-menu-item"],
+[data-slot="popover-content"] button,
+[role="menuitem"] {
+  font-size: 13px !important;
+  padding: 8px 12px !important;
+  color: var(--text-secondary) !important;
+  border-radius: 6px !important;
+}
+
+[data-slot="dropdown-menu-item"]:hover,
+[role="menuitem"]:hover {
+  background: var(--surface-2) !important;
+  color: var(--text-primary) !important;
+}
+
+/* Sidebar responsive - workaround for Tailwind v4 hidden bug (#16586) */
+.show-desktop { display: none; }
+.show-mobile { display: flex; }
+.main-content { padding-top: 3.5rem; }
+@media (min-width: 768px) {
+  .show-desktop { display: flex; }
+  .show-mobile { display: none; }
+  .main-content { padding-top: 0; }
+}
+

@@ -12,12 +12,12 @@ export function SidebarLink({ href, label, icon }: { href: string; label: string
       href={href}
       className={`group flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-medium transition-all duration-150 ${
         isActive
-          ? "bg-[var(--accent)]/10 text-[var(--accent)]"
-          : "text-[var(--text-secondary)] hover:text-white hover:bg-white/[0.04]"
+          ? "bg-(--accent)/10 text-(--accent)"
+          : "text-(--text-secondary) hover:text-white hover:bg-white/4"
       }`}
     >
       <svg
-        className={`w-4 h-4 shrink-0 transition-colors ${isActive ? "text-[var(--accent)]" : "text-[var(--text-secondary)]/60 group-hover:text-white/60"}`}
+        className={`w-4 h-4 shrink-0 transition-colors ${isActive ? "text-(--accent)" : "text-(--text-secondary)/60 group-hover:text-white/60"}`}
         fill="none"
         viewBox="0 0 24 24"
         stroke="currentColor"
