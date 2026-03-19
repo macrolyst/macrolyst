@@ -48,7 +48,7 @@ export function SectorChart({ sectors }: { sectors: SectorData[] }) {
           }}
           labelStyle={{ color: "#f0ede6" }}
           itemStyle={{ color: "#f0ede6" }}
-          formatter={(value: number) => [`${value > 0 ? "+" : ""}${value.toFixed(3)}%`, "Avg Change"]}
+          formatter={(value) => { const v = Number(value); return [`${v > 0 ? "+" : ""}${v.toFixed(3)}%`, "Avg Change"]; }}
         />
         <ReferenceLine x={0} stroke="rgba(255,255,255,0.1)" />
         <Bar dataKey="change" radius={[0, 4, 4, 0]} barSize={20}>

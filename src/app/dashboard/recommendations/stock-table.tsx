@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import type { StockScore } from "@/lib/db/queries";
-import { formatCurrency, formatPercent, formatMarketCap } from "@/lib/format";
+import { formatCurrency, formatMarketCap } from "@/lib/format";
 import { ChangeBadge } from "@/components/ui/change-badge";
 import { ScoreBar } from "@/components/ui/score-bar";
 

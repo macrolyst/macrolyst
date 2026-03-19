@@ -3,7 +3,6 @@
 import { useState, useMemo } from "react";
 import type { EarningsEvent } from "@/lib/db/queries";
 import { formatPercent, formatDate, formatCompactNumber } from "@/lib/format";
-import { ChangeBadge } from "@/components/ui/change-badge";
 
 export function EarningsView({ events }: { events: EarningsEvent[] }) {
   const [tab, setTab] = useState<"upcoming" | "past">("upcoming");

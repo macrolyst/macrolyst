@@ -57,7 +57,7 @@ export function CatalystChart({ hours }: { hours: CatalystHourData[] }) {
             fontSize: 12,
             color: "#f0ede6",
           }}
-          formatter={(value: number) => [`$${value.toFixed(2)}`, "SPY"]}
+          formatter={(value) => [`$${Number(value).toFixed(2)}`, "SPY"]}
           labelStyle={{ color: "#f0ede6" }}
           itemStyle={{ color: "#f0ede6" }}
         />

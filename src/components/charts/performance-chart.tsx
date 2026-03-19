@@ -46,7 +46,7 @@ export function PerformanceChart({ data }: { data: PerformanceData }) {
             fontSize: 12,
             color: "#f0ede6",
           }}
-          formatter={(value: number) => [`${value > 0 ? "+" : ""}${value.toFixed(2)}%`, "Return"]}
+          formatter={(value) => { const v = Number(value); return [`${v > 0 ? "+" : ""}${v.toFixed(2)}%`, "Return"]; }}
           labelStyle={{ color: "#f0ede6" }}
           itemStyle={{ color: "#f0ede6" }}
         />

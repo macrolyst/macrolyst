@@ -1,5 +1,5 @@
 import { getLatestRun, getMarketSummary, getSectorPerformance, getStockScores, getCatalystData } from "@/lib/db/queries";
-import { formatPercent, formatNumber, formatCurrency, formatDate } from "@/lib/format";
+import { formatNumber, formatCurrency, formatDate } from "@/lib/format";
 import { EmptyState } from "@/components/ui/empty-state";
 import { DataFreshness } from "@/components/ui/data-freshness";
 import { ChangeBadge } from "@/components/ui/change-badge";
