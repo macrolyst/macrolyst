@@ -1,4 +1,4 @@
-export default function NewsPage() {
+export default function NewsCatalystsPage() {
   return (
     <div>
       <h1 className="text-2xl font-bold text-white font-[family-name:var(--font-source-serif)] mb-2">News & Catalysts</h1>

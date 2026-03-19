@@ -1,4 +1,4 @@
-export default function TradingPage() {
+export default function PaperTradingPage() {
   return (
     <div>
       <h1 className="text-2xl font-bold text-white font-[family-name:var(--font-source-serif)] mb-2">Paper Trading</h1>

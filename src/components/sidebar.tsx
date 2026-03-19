@@ -34,26 +34,13 @@ export function Sidebar() {
       </button>
 
       {mobileOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-black/60 lg:hidden"
-          onClick={() => setMobileOpen(false)}
-        />
+        <div className="fixed inset-0 z-40 bg-black/60 lg:hidden" onClick={() => setMobileOpen(false)} />
       )}
 
-      <aside
-        className={`fixed top-0 left-0 z-50 h-full w-64 bg-[var(--surface-1)] border-r border-white/10 flex flex-col transition-transform duration-200 ${
-          mobileOpen ? "translate-x-0" : "-translate-x-full"
-        } lg:translate-x-0 lg:static lg:z-auto`}
-      >
+      <aside className={`fixed top-0 left-0 z-50 h-full w-64 bg-[var(--surface-1)] border-r border-white/10 flex flex-col transition-transform duration-200 ${mobileOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0 lg:static lg:z-auto`}>
         <div className="flex items-center justify-between px-5 py-5 border-b border-white/10">
-          <span className="text-lg font-bold text-white font-[family-name:var(--font-source-serif)]">
-            Macrolyst
-          </span>
-          <button
-            onClick={() => setMobileOpen(false)}
-            className="lg:hidden text-[var(--text-secondary)] hover:text-white cursor-pointer"
-            aria-label="Close menu"
-          >
+          <span className="text-lg font-bold text-white font-[family-name:var(--font-source-serif)]">Macrolyst</span>
+          <button onClick={() => setMobileOpen(false)} className="lg:hidden text-[var(--text-secondary)] hover:text-white cursor-pointer" aria-label="Close menu">
             <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
               <path d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" />
             </svg>
