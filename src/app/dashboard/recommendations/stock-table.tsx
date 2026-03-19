@@ -9,6 +9,28 @@ import { ScoreBar } from "@/components/ui/score-bar";
 type SortKey = "rank" | "ticker" | "compositeScore" | "price" | "change1d" | "upsidePct";
 type SortDir = "asc" | "desc";
 
+function SortHeader({ label, field, sortKey, sortDir, onSort, className = "" }: {
+  label: string;
+  field: SortKey;
+  sortKey: SortKey;
+  sortDir: SortDir;
+  onSort: (key: SortKey) => void;
+  className?: string;
+}) {
+  const active = sortKey === field;
+  return (
+    <button
+      onClick={() => onSort(field)}
+      className={`flex items-center gap-1 text-xs uppercase tracking-wider cursor-pointer hover:text-white transition-colors ${
+        active ? "text-white" : "text-(--text-secondary)"
+      } ${className}`}
+    >
+      {label}
+      {active && <span>{sortDir === "asc" ? "↑" : "↓"}</span>}
+    </button>
+  );
+}
+
 export function StockTable({ stocks }: { stocks: StockScore[] }) {
   const [sortKey, setSortKey] = useState<SortKey>("rank");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
@@ -39,21 +61,6 @@ export function StockTable({ stocks }: { stocks: StockScore[] }) {
       setSortKey(key);
       setSortDir(key === "rank" ? "asc" : "desc");
     }
-  }
-
-  function SortHeader({ label, field, className = "" }: { label: string; field: SortKey; className?: string }) {
-    const active = sortKey === field;
-    return (
-      <button
-        onClick={() => toggleSort(field)}
-        className={`flex items-center gap-1 text-xs uppercase tracking-wider cursor-pointer hover:text-white transition-colors ${
-          active ? "text-white" : "text-(--text-secondary)"
-        } ${className}`}
-      >
-        {label}
-        {active && <span>{sortDir === "asc" ? "↑" : "↓"}</span>}
-      </button>
-    );
   }
 
   return (
@@ -95,13 +102,13 @@ export function StockTable({ stocks }: { stocks: StockScore[] }) {
 
       {/* Table header - desktop only via media query */}
       <div className="hidden md:grid grid-cols-[3rem_5rem_1fr_5rem_5rem_5rem_4rem] gap-2 px-4 py-2 border-b border-(--border)">
-        <SortHeader label="#" field="rank" />
-        <SortHeader label="Ticker" field="ticker" />
+        <SortHeader label="#" field="rank" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
+        <SortHeader label="Ticker" field="ticker" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
         <span className="text-xs text-(--text-secondary) uppercase tracking-wider">Name</span>
-        <SortHeader label="Price" field="price" className="justify-end" />
-        <SortHeader label="1D" field="change1d" className="justify-end" />
-        <SortHeader label="Upside" field="upsidePct" className="justify-end" />
-        <SortHeader label="Score" field="compositeScore" className="justify-end" />
+        <SortHeader label="Price" field="price" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} className="justify-end" />
+        <SortHeader label="1D" field="change1d" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} className="justify-end" />
+        <SortHeader label="Upside" field="upsidePct" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} className="justify-end" />
+        <SortHeader label="Score" field="compositeScore" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} className="justify-end" />
       </div>
 
       {/* Rows */}
