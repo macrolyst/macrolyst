@@ -1,6 +1,11 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { auth } from "@/lib/auth/server";
 
-export default function Home() {
+export default async function Home() {
+  const session = await auth.getSession();
+  if (session?.data?.user) redirect("/dashboard");
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-[var(--surface-0)] px-4">
       <h1 className="text-5xl sm:text-6xl font-bold text-white font-[family-name:var(--font-source-serif)] text-center">

@@ -56,7 +56,7 @@ export function Sidebar() {
         </nav>
 
         <div className="px-4 py-4 border-t border-white/10">
-          <UserButton />
+          <UserButton size="icon" />
         </div>
       </aside>
     </>

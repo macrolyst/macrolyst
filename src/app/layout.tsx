@@ -24,7 +24,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`dark ${dmSans.variable} ${sourceSerif.variable}`}>
+    <html lang="en" className={`${dmSans.variable} ${sourceSerif.variable}`} suppressHydrationWarning>
       <body className="bg-[#0B1120] text-[#f0ede6] antialiased font-[family-name:var(--font-dm-sans)]">
         <Providers>{children}</Providers>
       </body>
