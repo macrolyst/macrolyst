@@ -2,9 +2,9 @@
 
 import { useState, useMemo } from "react";
 import type { StockScore } from "@/lib/db/queries";
-import { formatCurrency, formatMarketCap } from "@/lib/format";
+import { formatCurrency } from "@/lib/format";
 import { ChangeBadge } from "@/components/ui/change-badge";
-import { ScoreBar } from "@/components/ui/score-bar";
+import { StockDetail } from "./stock-detail";
 
 type SortKey = "rank" | "ticker" | "compositeScore" | "price" | "change1d" | "upsidePct";
 type SortDir = "asc" | "desc";
@@ -148,58 +148,7 @@ export function StockTable({ stocks }: { stocks: StockScore[] }) {
             </button>
 
             {/* Expanded detail */}
-            {expanded === stock.ticker && (
-              <div className="px-4 pb-4 bg-(--surface-2)/30 border-t border-(--border)">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4">
-                  <div>
-                    <p className="text-xs text-(--text-secondary) uppercase tracking-wider mb-3">Score Breakdown</p>
-                    <div className="space-y-2">
-                      <ScoreBar label="Analyst" value={stock.scoreAnalyst} />
-                      <ScoreBar label="Technical" value={stock.scoreTechnical} />
-                      <ScoreBar label="Momentum" value={stock.scoreMomentum} />
-                      <ScoreBar label="Volume" value={stock.scoreVolume} />
-                      <ScoreBar label="News" value={stock.scoreNews} />
-                    </div>
-                  </div>
-
-                  <div>
-                    <p className="text-xs text-(--text-secondary) uppercase tracking-wider mb-3">Key Metrics</p>
-                    <div className="grid grid-cols-2 gap-y-2 gap-x-4 text-xs">
-                      <span className="text-(--text-secondary)">RSI (14)</span>
-                      <span className="text-white text-right">{stock.rsi?.toFixed(1) ?? "--"}</span>
-                      <span className="text-(--text-secondary)">P/E Ratio</span>
-                      <span className="text-white text-right">{stock.peRatio?.toFixed(1) ?? "--"}</span>
-                      <span className="text-(--text-secondary)">Market Cap</span>
-                      <span className="text-white text-right">{formatMarketCap(stock.marketCap)}</span>
-                      <span className="text-(--text-secondary)">Sharpe Ratio</span>
-                      <span className="text-white text-right">{stock.sharpeRatio?.toFixed(2) ?? "--"}</span>
-                      <span className="text-(--text-secondary)">Volatility</span>
-                      <span className="text-white text-right">{stock.annualVolatility?.toFixed(1) ?? "--"}%</span>
-                      <span className="text-(--text-secondary)">Max Drawdown</span>
-                      <span className="text-(--down) text-right">{stock.maxDrawdownPct ? `-${stock.maxDrawdownPct.toFixed(1)}%` : "--"}</span>
-                      <span className="text-(--text-secondary)">52W Range</span>
-                      <span className="text-white text-right">{formatCurrency(stock.yearLow)} - {formatCurrency(stock.yearHigh)}</span>
-                      <span className="text-(--text-secondary)">Sector Rank</span>
-                      <span className="text-white text-right">{stock.sectorRank ?? "--"} / {stock.sectorCount ?? "--"}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {stock.reasons && stock.reasons.length > 0 && (
-                  <div className="pt-3 border-t border-(--border)">
-                    <p className="text-xs text-(--text-secondary) uppercase tracking-wider mb-2">Reasons</p>
-                    <ul className="space-y-1">
-                      {stock.reasons.map((reason, i) => (
-                        <li key={i} className="text-xs text-(--text-primary) flex gap-2">
-                          <span className="text-(--accent) shrink-0">-</span>
-                          {reason}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </div>
-            )}
+            {expanded === stock.ticker && <StockDetail stock={stock} />}
           </div>
         ))}
       </div>
