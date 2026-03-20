@@ -18,11 +18,9 @@ function getMacdExplanation(macd: number | null): { text: string; color: string 
   return { text: "Selling momentum currently stronger -- bearish pressure", color: "#F87171" };
 }
 
-function getMaExplanation(price: number | null, sma50: number | null, sma200: number | null): { text: string; color: string } {
+function getMaExplanation(price: number | null, sma50: number | null): { text: string; color: string } {
   if (!price || !sma50) return { text: "Insufficient moving average data", color: "#94a3b8" };
-  if (price > sma50 && sma50 > (sma200 ?? 0)) return { text: "Price above both MAs -- strong uptrend confirmed", color: "#34D399" };
   if (price > sma50) return { text: "Price above 50-day MA -- short-term trend is positive", color: "#34D399" };
-  if (price < sma50 && price < (sma200 ?? Infinity)) return { text: "Price below both MAs -- downtrend, but can signal deep value", color: "#F87171" };
   return { text: "Price below 50-day MA -- short-term trend weak but can signal value", color: "#FBBF24" };
 }
 
@@ -40,11 +38,10 @@ function getBollingerExplanation(price: number | null, bbUpper: number | null, b
   return { label: "Within Bands", text: "Trading in normal statistical range", color: "#94a3b8" };
 }
 
-function getTrendExplanation(price: number | null, sma50: number | null, sma200: number | null): { label: string; color: string; text: string } {
-  if (!price || !sma50 || !sma200) return { label: "Unknown", color: "#94a3b8", text: "Insufficient data for trend analysis" };
-  if (price > sma50 && price > sma200 && sma50 > sma200) return { label: "Uptrend", color: "#34D399", text: "All signals aligned bullish -- price above both moving averages" };
-  if (price < sma50 && price < sma200 && sma50 < sma200) return { label: "Downtrend", color: "#F87171", text: "All signals aligned bearish -- price below both moving averages" };
-  return { label: "Mixed", color: "#FBBF24", text: "Conflicting signals -- trend is transitioning or choppy" };
+function getTrendExplanation(price: number | null, sma50: number | null): { label: string; color: string; text: string } {
+  if (!price || !sma50) return { label: "Unknown", color: "#94a3b8", text: "Insufficient data for trend analysis" };
+  if (price > sma50) return { label: "Bullish", color: "#34D399", text: "Price above 50-day moving average -- short-term trend is positive" };
+  return { label: "Bearish", color: "#F87171", text: "Price below 50-day moving average -- short-term trend is weak" };
 }
 
 function getReturnExplanation(ret: number | null): { text: string; color: string } {
@@ -81,10 +78,10 @@ function TechnicalCard({ title, value, explanation, color }: { title: string; va
 export function StockDetail({ stock }: { stock: StockScore }) {
   const rsiInfo = getRsiExplanation(stock.rsi);
   const macdInfo = getMacdExplanation(stock.macdHist);
-  const maInfo = getMaExplanation(stock.price, stock.sma50, stock.sma200);
+  const maInfo = getMaExplanation(stock.price, stock.sma50);
   const volInfo = getVolumeExplanation(stock.volRatio);
   const bbInfo = getBollingerExplanation(stock.price, stock.bbUpper, stock.bbLower);
-  const trendInfo = getTrendExplanation(stock.price, stock.sma50, stock.sma200);
+  const trendInfo = getTrendExplanation(stock.price, stock.sma50);
   const returnInfo = getReturnExplanation(stock.return1y);
   const sharpeInfo = getSharpeExplanation(stock.sharpeRatio);
   const rangePos = get52wPosition(stock.price, stock.yearLow, stock.yearHigh);
@@ -210,7 +207,7 @@ export function StockDetail({ stock }: { stock: StockScore }) {
 
           <TechnicalCard
             title="Moving Averages"
-            value={stock.sma50 ? `50d: $${stock.sma50.toFixed(0)} / 200d: $${stock.sma200?.toFixed(0) ?? "N/A"}` : "--"}
+            value={stock.sma50 ? `50d: $${stock.sma50.toFixed(0)}` : "--"}
             explanation={maInfo.text}
             color={maInfo.color}
           />
@@ -222,10 +219,10 @@ export function StockDetail({ stock }: { stock: StockScore }) {
             color={volInfo.color}
           />
 
-          {/* 52-Week Range with visual slider */}
+          {/* 60-Day Range with visual slider */}
           <div className="rounded-lg bg-(--surface-1) border border-(--border) p-3">
             <div className="flex items-center justify-between mb-1.5">
-              <span className="text-xs text-(--text-secondary) uppercase tracking-wider">52-Week Range</span>
+              <span className="text-xs text-(--text-secondary) uppercase tracking-wider">60-Day Range</span>
             </div>
             <div className="flex items-center gap-2 text-xs mb-2">
               <span className="text-(--text-secondary) font-mono">{formatCurrency(stock.yearLow)}</span>

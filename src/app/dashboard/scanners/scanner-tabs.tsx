@@ -14,10 +14,6 @@ const SCANNER_INFO: Record<string, { label: string; description: string }> = {
     label: "MACD Bullish",
     description: '<strong>What is MACD?</strong> Moving Average Convergence Divergence tracks momentum by comparing two moving averages. <strong>What is a "bullish crossover"?</strong> It happens when the faster-moving average crosses above the slower one. Imagine two runners -- when the sprinter overtakes the jogger, it means the pace is picking up. These stocks just had that crossover, suggesting buying pressure is building. <strong>Best used:</strong> As confirmation alongside other signals like RSI or analyst targets.',
   },
-  golden_cross: {
-    label: "Golden Cross",
-    description: "<strong>What is a Golden Cross?</strong> One of the most famous signals on Wall Street. It happens when a stock's 50-day moving average crosses above its 200-day moving average. The 50-day represents the short-term trend, the 200-day represents the long-term. When short-term overtakes long-term, it means recent momentum has shifted the entire trajectory upward. Historically, golden crosses have preceded significant rallies. <strong>The opposite</strong> (50-day crossing below 200-day) is called a \"Death Cross.\"",
-  },
   volume_breakout: {
     label: "Volume Spike",
     description: "<strong>What is a volume spike?</strong> When today's volume is 2x or more above the 20-day average. Most daily trading is routine -- small investors, algorithms, regular rebalancing. When volume suddenly doubles or triples, it means big institutional players (hedge funds, pension funds) are making moves. High volume confirms that a price move is \"real\" and not just noise. A stock rising on low volume is suspicious; a stock rising on huge volume is meaningful.",
@@ -27,8 +23,8 @@ const SCANNER_INFO: Record<string, { label: string; description: string }> = {
     description: "<strong>What are Bollinger Bands?</strong> A channel drawn around a stock's 20-day moving average, set at 2 standard deviations. About 95% of all price action normally stays within this channel. When a stock drops below the lower band, it has moved further from its average than is statistically normal. Like a ball bouncing below the floor, this is usually temporary. <strong>Pro tip:</strong> Bollinger oversold + RSI oversold together is a stronger signal than either alone.",
   },
   near_52w_low: {
-    label: "Near 52W Low",
-    description: '<strong>What does this mean?</strong> These stocks are within 5% of their lowest price in the past year. <strong>Bull case:</strong> The stock has been beaten down so much that it represents deep value -- if the business is solid, this could be a buying opportunity while everyone else is scared. <strong>Bear case:</strong> Some stocks are near their low because the company is in real trouble. This is called "catching a falling knife." Always check the reasons and fundamentals before acting.',
+    label: "Near Period Low",
+    description: '<strong>What does this mean?</strong> These stocks are within 5% of their lowest price in the past 60 days. <strong>Bull case:</strong> The stock has been beaten down so much that it represents deep value -- if the business is solid, this could be a buying opportunity while everyone else is scared. <strong>Bear case:</strong> Some stocks are near their low because the company is in real trouble. This is called "catching a falling knife." Always check the reasons and fundamentals before acting.',
   },
   biggest_gainers: {
     label: "Top Gainers",
