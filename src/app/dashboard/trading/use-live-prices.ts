@@ -15,12 +15,16 @@ export type Quote = {
 };
 
 const POLL_INTERVAL = 30000;
+const INACTIVITY_TIMEOUT = 5 * 60 * 1000; // 5 minutes
 
 export function useLivePrices(symbols: string[]) {
   const [prices, setPrices] = useState<Map<string, Quote>>(new Map());
   const [loading, setLoading] = useState(true);
   const [marketOpen, setMarketOpen] = useState(true);
+  const [paused, setPaused] = useState(false);
   const symbolsRef = useRef(symbols);
+  const lastActivityRef = useRef(Date.now());
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   symbolsRef.current = symbols;
 
   const fetchPrices = useCallback(async () => {
@@ -47,6 +51,31 @@ export function useLivePrices(symbols: string[]) {
     }
   }, []);
 
+  const checkMarket = useCallback(() => {
+    const now = new Date();
+    const et = new Date(now.toLocaleString("en-US", { timeZone: "America/New_York" }));
+    const day = et.getDay();
+    const mins = et.getHours() * 60 + et.getMinutes();
+    setMarketOpen(day > 0 && day < 6 && mins >= 570 && mins < 960);
+  }, []);
+
+  const startPolling = useCallback(() => {
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    setPaused(false);
+    fetchPrices();
+    intervalRef.current = setInterval(() => {
+      // Check inactivity
+      if (Date.now() - lastActivityRef.current > INACTIVITY_TIMEOUT) {
+        if (intervalRef.current) clearInterval(intervalRef.current);
+        intervalRef.current = null;
+        setPaused(true);
+        return;
+      }
+      checkMarket();
+      fetchPrices();
+    }, POLL_INTERVAL);
+  }, [fetchPrices, checkMarket]);
+
   const symbolsKey = symbols.join(",");
 
   useEffect(() => {
@@ -55,24 +84,42 @@ export function useLivePrices(symbols: string[]) {
       return;
     }
 
-    const checkMarket = () => {
-      const now = new Date();
-      const et = new Date(now.toLocaleString("en-US", { timeZone: "America/New_York" }));
-      const day = et.getDay();
-      const mins = et.getHours() * 60 + et.getMinutes();
-      setMarketOpen(day > 0 && day < 6 && mins >= 570 && mins < 960);
-    };
     checkMarket();
-    fetchPrices();
+    startPolling();
 
-    const interval = setInterval(() => {
-      checkMarket();
-      fetchPrices();
-    }, POLL_INTERVAL);
+    // Pause when tab is hidden, resume when visible
+    const handleVisibility = () => {
+      if (document.hidden) {
+        if (intervalRef.current) clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      } else {
+        lastActivityRef.current = Date.now();
+        startPolling();
+      }
+    };
 
-    return () => clearInterval(interval);
+    // Track user activity for inactivity timeout
+    const handleActivity = () => {
+      lastActivityRef.current = Date.now();
+      if (paused) startPolling();
+    };
+
+    document.addEventListener("visibilitychange", handleVisibility);
+    window.addEventListener("mousemove", handleActivity);
+    window.addEventListener("keydown", handleActivity);
+    window.addEventListener("touchstart", handleActivity);
+    window.addEventListener("scroll", handleActivity);
+
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      document.removeEventListener("visibilitychange", handleVisibility);
+      window.removeEventListener("mousemove", handleActivity);
+      window.removeEventListener("keydown", handleActivity);
+      window.removeEventListener("touchstart", handleActivity);
+      window.removeEventListener("scroll", handleActivity);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [symbolsKey, fetchPrices]);
+  }, [symbolsKey]);
 
-  return { prices, loading, marketOpen };
+  return { prices, loading, marketOpen, paused };
 }
