@@ -273,11 +273,11 @@ export function StockDetail({ stock }: { stock: StockScore }) {
             <div className="grid grid-cols-2 gap-3 mt-2">
               <div>
                 <p className="text-[10px] text-(--text-secondary)">5-Day Change</p>
-                <ChangeBadge value={stock.change5d ? stock.change5d * 100 : null} className="text-sm font-semibold" />
+                <ChangeBadge value={stock.change5d} className="text-sm font-semibold" />
               </div>
               <div>
                 <p className="text-[10px] text-(--text-secondary)">20-Day Change</p>
-                <ChangeBadge value={stock.change20d ? stock.change20d * 100 : null} className="text-sm font-semibold" />
+                <ChangeBadge value={stock.change20d} className="text-sm font-semibold" />
               </div>
             </div>
           </div>

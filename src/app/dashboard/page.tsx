@@ -23,7 +23,7 @@ export default async function DashboardPage() {
       label: "Market Breadth",
       value: summary?.marketBreadth ?? "--",
       detail: summary ? `${summary.advancers ?? 0} up / ${summary.decliners ?? 0} down` : null,
-      change: summary?.avgChange ? summary.avgChange * 100 : null,
+      change: summary?.avgChange ?? null,
     },
     {
       label: "VIX",
@@ -106,7 +106,7 @@ export default async function DashboardPage() {
                   </div>
                   <div className="flex items-center gap-2 mt-0.5">
                     <span className="text-xs text-(--text-secondary)">{formatCurrency(stock.price)}</span>
-                    <ChangeBadge value={stock.change1d ? stock.change1d * 100 : null} className="text-xs" />
+                    <ChangeBadge value={stock.change1d} className="text-xs" />
                   </div>
                 </div>
                 <div className="text-right">

@@ -200,20 +200,37 @@ export type ScannerResult = {
   scannerType: string;
   ticker: string;
   name: string | null;
-  value: number | null;
+  sector: string | null;
+  price: number | null;
+  change1d: number | null;
+  rsi: number | null;
+  compositeScore: number | null;
 };
 
 export async function getScannerResults(runId: number): Promise<ScannerResult[]> {
-  const rows = await db
-    .select()
-    .from(scannerResults)
-    .where(eq(scannerResults.runId, runId));
-  return rows.map((r) => ({
-    scannerType: r.scannerType,
-    ticker: r.ticker,
-    name: r.name,
-    value: num(r.value),
-  }));
+  const [scannerRows, scoreRows] = await Promise.all([
+    db.select().from(scannerResults).where(eq(scannerResults.runId, runId)),
+    db.select().from(stockScores).where(eq(stockScores.runId, runId)),
+  ]);
+
+  const scoreMap = new Map<string, typeof scoreRows[number]>();
+  for (const s of scoreRows) {
+    scoreMap.set(s.ticker, s);
+  }
+
+  return scannerRows.map((r) => {
+    const s = scoreMap.get(r.ticker);
+    return {
+      scannerType: r.scannerType,
+      ticker: r.ticker,
+      name: r.name,
+      sector: s?.sector ?? null,
+      price: s ? num(s.price) : null,
+      change1d: s ? num(s.change1d) : null,
+      rsi: s ? num(s.rsi) : null,
+      compositeScore: s ? num(s.compositeScore) : null,
+    };
+  });
 }
 
 // ----- News Articles -----

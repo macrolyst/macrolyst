@@ -125,7 +125,7 @@ export function StockTable({ stocks }: { stocks: StockScore[] }) {
                 <span className="text-sm font-semibold text-white">{stock.ticker}</span>
                 <span className="text-sm text-(--text-secondary) truncate">{stock.name}</span>
                 <span className="text-sm text-white text-right">{formatCurrency(stock.price)}</span>
-                <div className="text-right"><ChangeBadge value={stock.change1d ? stock.change1d * 100 : null} className="text-xs" /></div>
+                <div className="text-right"><ChangeBadge value={stock.change1d} className="text-xs" /></div>
                 <div className="text-right"><ChangeBadge value={stock.upsidePct} className="text-xs" /></div>
                 <span className="text-sm font-bold text-(--accent) text-right">{stock.compositeScore?.toFixed(0) ?? "--"}</span>
               </div>
@@ -141,7 +141,7 @@ export function StockTable({ stocks }: { stocks: StockScore[] }) {
                 </div>
                 <div className="flex items-center gap-4 text-xs">
                   <span className="text-(--text-secondary)">{formatCurrency(stock.price)}</span>
-                  <ChangeBadge value={stock.change1d ? stock.change1d * 100 : null} className="text-xs" />
+                  <ChangeBadge value={stock.change1d} className="text-xs" />
                   <span className="text-(--text-secondary)">Target: {formatCurrency(stock.targetMean)}</span>
                 </div>
               </div>
