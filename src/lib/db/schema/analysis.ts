@@ -10,6 +10,7 @@ import {
   boolean,
   jsonb,
   index,
+  unique,
 } from "drizzle-orm/pg-core";
 
 export const analysisRuns = pgTable("analysis_runs", {
@@ -211,3 +212,25 @@ export const backtestResults = pgTable("backtest_results", {
   outperformance: decimal({ precision: 8, scale: 2 }),
   picks: jsonb(),
 });
+
+export const picksHistory = pgTable(
+  "picks_history",
+  {
+    id: serial().primaryKey(),
+    runId: integer("run_id").notNull().references(() => analysisRuns.id, { onDelete: "cascade" }),
+    pickDate: date("pick_date").notNull(),
+    ticker: text().notNull(),
+    name: text(),
+    sector: text(),
+    rank: integer(),
+    priceAtPick: decimal("price_at_pick", { precision: 10, scale: 2 }),
+    return1d: decimal("return_1d", { precision: 8, scale: 2 }),
+    return5d: decimal("return_5d", { precision: 8, scale: 2 }),
+    return10d: decimal("return_10d", { precision: 8, scale: 2 }),
+    return20d: decimal("return_20d", { precision: 8, scale: 2 }),
+  },
+  (table) => [
+    unique("picks_history_date_ticker_uniq").on(table.pickDate, table.ticker),
+    index("picks_history_pick_date_idx").on(table.pickDate),
+  ]
+);

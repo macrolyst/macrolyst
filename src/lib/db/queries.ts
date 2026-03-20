@@ -426,3 +426,141 @@ export async function getBacktestData(runId: number): Promise<BacktestData | nul
     picks: row.picks as BacktestPick[] | null,
   };
 }
+
+// ----- Picks Accuracy Tracking -----
+
+export type PickHistoryEntry = {
+  pickDate: string;
+  ticker: string;
+  name: string | null;
+  sector: string | null;
+  rank: number | null;
+  priceAtPick: number | null;
+  return1d: number | null;
+  return5d: number | null;
+  return10d: number | null;
+  return20d: number | null;
+};
+
+export type PicksAccuracySummary = {
+  totalPicks: number;
+  evaluated1d: number;
+  wins1d: number;
+  winRate1d: number | null;
+  avgReturn1d: number | null;
+  evaluated5d: number;
+  wins5d: number;
+  winRate5d: number | null;
+  avgReturn5d: number | null;
+  evaluated10d: number;
+  wins10d: number;
+  winRate10d: number | null;
+  avgReturn10d: number | null;
+  evaluated20d: number;
+  wins20d: number;
+  winRate20d: number | null;
+  avgReturn20d: number | null;
+  recentPicks: PickHistoryEntry[];
+  dailySummaries: { date: string; avgReturn1d: number | null; winRate1d: number | null; pickCount: number }[];
+  sectorBreakdown: { sector: string; picks: number; wins: number; winRate: number; avgReturn: number }[];
+};
+
+export async function getPicksAccuracy(): Promise<PicksAccuracySummary | null> {
+  const { picksHistory } = await import("@/lib/db/schema");
+  const rows = await db
+    .select()
+    .from(picksHistory)
+    .orderBy(desc(picksHistory.pickDate), asc(picksHistory.rank));
+
+  if (rows.length === 0) return null;
+
+  const entries: PickHistoryEntry[] = rows.map((r) => ({
+    pickDate: r.pickDate,
+    ticker: r.ticker,
+    name: r.name,
+    sector: r.sector ?? null,
+    rank: r.rank,
+    priceAtPick: num(r.priceAtPick),
+    return1d: num(r.return1d),
+    return5d: num(r.return5d),
+    return10d: num(r.return10d),
+    return20d: num(r.return20d),
+  }));
+
+  const avg = (arr: number[]) => arr.length > 0 ? Math.round((arr.reduce((a, b) => a + b, 0) / arr.length) * 100) / 100 : null;
+
+  const with1d = entries.filter((e) => e.return1d !== null);
+  const with5d = entries.filter((e) => e.return5d !== null);
+  const with10d = entries.filter((e) => e.return10d !== null);
+  const with20d = entries.filter((e) => e.return20d !== null);
+
+  const wins1d = with1d.filter((e) => e.return1d! > 0).length;
+  const wins5d = with5d.filter((e) => e.return5d! > 0).length;
+  const wins10d = with10d.filter((e) => e.return10d! > 0).length;
+  const wins20d = with20d.filter((e) => e.return20d! > 0).length;
+
+  // Daily summaries
+  const byDate = new Map<string, PickHistoryEntry[]>();
+  for (const e of entries) {
+    const list = byDate.get(e.pickDate) || [];
+    list.push(e);
+    byDate.set(e.pickDate, list);
+  }
+
+  const dailySummaries = Array.from(byDate.entries())
+    .map(([date, picks]) => {
+      const evaluated = picks.filter((p) => p.return1d !== null);
+      const wins = evaluated.filter((p) => p.return1d! > 0).length;
+      return {
+        date,
+        avgReturn1d: avg(evaluated.map((p) => p.return1d!)),
+        winRate1d: evaluated.length > 0 ? Math.round((wins / evaluated.length) * 1000) / 10 : null,
+        pickCount: picks.length,
+      };
+    })
+    .sort((a, b) => a.date.localeCompare(b.date));
+
+  // Sector breakdown (using 1d returns)
+  const bySector = new Map<string, { picks: number; wins: number; returns: number[] }>();
+  for (const e of with1d) {
+    const sector = e.sector || "Unknown";
+    const entry = bySector.get(sector) || { picks: 0, wins: 0, returns: [] };
+    entry.picks++;
+    if (e.return1d! > 0) entry.wins++;
+    entry.returns.push(e.return1d!);
+    bySector.set(sector, entry);
+  }
+
+  const sectorBreakdown = Array.from(bySector.entries())
+    .map(([sector, data]) => ({
+      sector,
+      picks: data.picks,
+      wins: data.wins,
+      winRate: Math.round((data.wins / data.picks) * 1000) / 10,
+      avgReturn: avg(data.returns) ?? 0,
+    }))
+    .sort((a, b) => b.avgReturn - a.avgReturn);
+
+  return {
+    totalPicks: entries.length,
+    evaluated1d: with1d.length,
+    wins1d,
+    winRate1d: with1d.length > 0 ? Math.round((wins1d / with1d.length) * 1000) / 10 : null,
+    avgReturn1d: avg(with1d.map((e) => e.return1d!)),
+    evaluated5d: with5d.length,
+    wins5d,
+    winRate5d: with5d.length > 0 ? Math.round((wins5d / with5d.length) * 1000) / 10 : null,
+    avgReturn5d: avg(with5d.map((e) => e.return5d!)),
+    evaluated10d: with10d.length,
+    wins10d,
+    winRate10d: with10d.length > 0 ? Math.round((wins10d / with10d.length) * 1000) / 10 : null,
+    avgReturn10d: avg(with10d.map((e) => e.return10d!)),
+    evaluated20d: with20d.length,
+    wins20d,
+    winRate20d: with20d.length > 0 ? Math.round((wins20d / with20d.length) * 1000) / 10 : null,
+    avgReturn20d: avg(with20d.map((e) => e.return20d!)),
+    recentPicks: entries.slice(0, 50),
+    dailySummaries,
+    sectorBreakdown,
+  };
+}
