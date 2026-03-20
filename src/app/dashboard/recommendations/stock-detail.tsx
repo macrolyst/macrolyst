@@ -1,6 +1,7 @@
 import type { StockScore } from "@/lib/db/queries";
 import { formatCurrency, formatMarketCap } from "@/lib/format";
 import { ChangeBadge } from "@/components/ui/change-badge";
+import Link from "next/link";
 import { ScoreBar } from "@/components/ui/score-bar";
 
 function getRsiExplanation(rsi: number | null): { text: string; color: string } {
@@ -92,6 +93,14 @@ export function StockDetail({ stock }: { stock: StockScore }) {
 
         {/* LEFT COLUMN */}
         <div className="space-y-5">
+
+          {/* Buy button */}
+          <Link
+            href={`/dashboard/trading?buy=${stock.ticker}`}
+            className="flex items-center justify-center gap-2 w-full py-2.5 rounded-lg bg-(--up)/15 text-(--up) text-sm font-medium hover:bg-(--up)/25 transition-colors"
+          >
+            Buy {stock.ticker}
+          </Link>
 
           {/* Score Breakdown */}
           <div>

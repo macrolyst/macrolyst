@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 import type { ScannerResult } from "@/lib/db/queries";
 import { formatCurrency } from "@/lib/format";
 import { ChangeBadge } from "@/components/ui/change-badge";
+import Link from "next/link";
 
 const SCANNER_INFO: Record<string, { label: string; description: string }> = {
   rsi_oversold: {
@@ -111,6 +112,7 @@ export function ScannerTabs({ results }: { results: ScannerResult[] }) {
                 <th className="px-3 py-2.5 text-right text-xs uppercase tracking-wider text-(--text-secondary)">Today</th>
                 <th className="px-3 py-2.5 text-right text-xs uppercase tracking-wider text-(--text-secondary)">RSI</th>
                 <th className="px-3 py-2.5 text-right text-xs uppercase tracking-wider text-(--text-secondary)">Score</th>
+                <th className="px-3 py-2.5 text-right text-xs uppercase tracking-wider text-(--text-secondary)"></th>
               </tr>
             </thead>
             <tbody>
@@ -133,6 +135,9 @@ export function ScannerTabs({ results }: { results: ScannerResult[] }) {
                   <td className="px-3 py-2.5 text-right">
                     <ScorePill value={result.compositeScore} />
                   </td>
+                  <td className="px-3 py-2.5 text-right">
+                    <Link href={`/dashboard/trading?buy=${result.ticker}`} className="text-xs text-(--accent) hover:underline">Buy</Link>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -147,7 +152,10 @@ export function ScannerTabs({ results }: { results: ScannerResult[] }) {
                     <span className="font-semibold text-white">{result.ticker}</span>
                     <span className="text-xs text-(--text-secondary) ml-1.5">{result.name}</span>
                   </div>
-                  <ScorePill value={result.compositeScore} />
+                  <div className="flex items-center gap-2">
+                    <ScorePill value={result.compositeScore} />
+                    <Link href={`/dashboard/trading?buy=${result.ticker}`} className="text-xs text-(--accent) hover:underline">Buy</Link>
+                  </div>
                 </div>
                 <div className="flex items-center gap-4 text-xs">
                   <span className="text-(--text-secondary)">{result.sector}</span>
