@@ -166,7 +166,7 @@ export function Sidebar() {
       {mobileOpen && (
         <>
           <div className="fixed inset-0 z-40 bg-black/60" onClick={() => setMobileOpen(false)} />
-          <aside className="fixed inset-y-0 right-0 z-50 w-64 bg-(--surface-1) border-l border-(--border) flex flex-col">
+          <aside className="fixed inset-0 z-50 bg-(--surface-1) flex flex-col">
             <div className="flex items-center justify-between px-4 h-14 border-b border-(--border) shrink-0">
               <span className="text-sm font-semibold text-white">Menu</span>
               <button onClick={() => setMobileOpen(false)} className="text-(--text-secondary) hover:text-white cursor-pointer p-1" aria-label="Close menu">
