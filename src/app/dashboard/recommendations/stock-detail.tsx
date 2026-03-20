@@ -87,7 +87,7 @@ export function StockDetail({ stock }: { stock: StockScore }) {
   const rangePos = get52wPosition(stock.price, stock.yearLow, stock.yearHigh);
 
   return (
-    <div className="px-4 pb-5 bg-(--surface-2)/20 border-t border-(--border)">
+    <div className="mx-2 mb-2 rounded-lg bg-(--surface-2) border border-(--border) border-l-3 border-l-(--accent)/40 px-4 pb-5">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 py-5">
 
         {/* LEFT COLUMN */}

@@ -29,7 +29,7 @@ export function NewsFeed({ articles }: { articles: NewsArticle[] }) {
     });
     return list.sort((a, b) => {
       if (!a.published || !b.published) return 0;
-      return b.published.getTime() - a.published.getTime();
+      return new Date(b.published).getTime() - new Date(a.published).getTime();
     });
   }, [articles, tab, sentimentFilter]);
 
@@ -98,7 +98,7 @@ export function NewsFeed({ articles }: { articles: NewsArticle[] }) {
                   {article.source && <span className="text-xs text-(--text-secondary)">{article.source}</span>}
                   {article.published && (
                     <span className="text-xs text-(--text-secondary)/50">
-                      {article.published.toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                      {new Date(article.published).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                     </span>
                   )}
                 </div>

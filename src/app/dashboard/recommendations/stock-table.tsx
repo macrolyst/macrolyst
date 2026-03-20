@@ -66,20 +66,18 @@ export function StockTable({ stocks }: { stocks: StockScore[] }) {
   return (
     <div>
       {/* Sector filter */}
-      <div className="flex gap-2 mb-4 flex-wrap px-4 pt-4">
-        {sectors.map((s) => (
-          <button
-            key={s}
-            onClick={() => setSectorFilter(s)}
-            className={`px-3 py-1.5 rounded-lg text-xs cursor-pointer transition-colors ${
-              sectorFilter === s
-                ? "bg-(--accent)/15 text-(--accent) border border-(--accent)/30"
-                : "bg-(--surface-2) text-(--text-secondary) border border-transparent hover:bg-(--surface-3)"
-            }`}
-          >
-            {s === "all" ? "All Sectors" : s}
-          </button>
-        ))}
+      <div className="px-4 pt-4 mb-4">
+        <select
+          value={sectorFilter}
+          onChange={(e) => setSectorFilter(e.target.value)}
+          className="appearance-none bg-(--surface-2) text-(--text-primary) border border-(--border) rounded-lg px-3 py-2 text-sm cursor-pointer hover:border-(--accent)/30 focus:border-(--accent)/50 focus:outline-none transition-colors w-full sm:w-auto"
+        >
+          {sectors.map((s) => (
+            <option key={s} value={s}>
+              {s === "all" ? "All Sectors" : s}
+            </option>
+          ))}
+        </select>
       </div>
 
       {/* Sort controls for mobile */}

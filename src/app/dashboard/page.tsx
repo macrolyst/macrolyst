@@ -18,28 +18,30 @@ export default async function DashboardPage() {
     getCatalystData(run.id),
   ]);
 
+  const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
   const pulseCards = [
     {
       label: "Market Breadth",
-      value: summary?.marketBreadth ?? "--",
+      value: summary?.marketBreadth ? capitalize(summary.marketBreadth) : "--",
       detail: summary ? `${summary.advancers ?? 0} up / ${summary.decliners ?? 0} down` : null,
       change: summary?.avgChange ?? null,
     },
     {
       label: "VIX",
-      value: summary?.vix !== null ? formatNumber(summary!.vix, 2) : "--",
+      value: summary?.vix != null ? formatNumber(summary.vix, 2) : "--",
       detail: "Volatility Index",
       change: null,
     },
     {
       label: "10Y Treasury",
-      value: summary?.treasury10y !== null ? `${formatNumber(summary!.treasury10y, 2)}%` : "--",
-      detail: summary?.treasury2y !== null ? `2Y: ${formatNumber(summary!.treasury2y, 2)}%` : null,
+      value: summary?.treasury10y != null ? `${formatNumber(summary.treasury10y, 2)}%` : "--",
+      detail: summary?.treasury2y != null ? `2Y: ${formatNumber(summary.treasury2y, 2)}%` : null,
       change: null,
     },
     {
       label: "Fed Funds",
-      value: summary?.fedFunds !== null ? `${formatNumber(summary!.fedFunds, 2)}%` : "--",
+      value: summary?.fedFunds != null ? `${formatNumber(summary.fedFunds, 2)}%` : "--",
       detail: "Target Rate",
       change: null,
     },
@@ -57,7 +59,7 @@ export default async function DashboardPage() {
       </div>
 
       {/* Market Pulse Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {pulseCards.map((card) => (
           <div key={card.label} className="card-glow p-5">
             <p className="text-xs text-(--text-secondary) uppercase tracking-wider mb-2">{card.label}</p>

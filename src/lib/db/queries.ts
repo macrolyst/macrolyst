@@ -1,5 +1,9 @@
 import { db } from "@/lib/db";
 import { desc, eq, asc, inArray } from "drizzle-orm";
+import { unstable_cache } from "next/cache";
+
+// Data refreshes once daily at 6 AM. Cache DB queries for 1 hour.
+const CACHE_TTL = 3600;
 import {
   analysisRuns,
   marketSummary,
@@ -32,7 +36,7 @@ export type AnalysisRun = {
   status: string | null;
 };
 
-export async function getLatestRun(): Promise<AnalysisRun | null> {
+async function _getLatestRun(): Promise<AnalysisRun | null> {
   const [run] = await db
     .select()
     .from(analysisRuns)
@@ -59,7 +63,7 @@ export type MarketSummaryData = {
   fedFunds: number | null;
 };
 
-export async function getMarketSummary(runId: number): Promise<MarketSummaryData | null> {
+async function _getMarketSummary(runId: number): Promise<MarketSummaryData | null> {
   const [row] = await db
     .select()
     .from(marketSummary)
@@ -88,7 +92,7 @@ export type SectorData = {
   color: string | null;
 };
 
-export async function getSectorPerformance(runId: number): Promise<SectorData[]> {
+async function _getSectorPerformance(runId: number): Promise<SectorData[]> {
   const rows = await db
     .select()
     .from(sectorPerformance)
@@ -144,7 +148,7 @@ export type StockScore = {
   reasons: string[] | null;
 };
 
-export async function getStockScores(runId: number, limit?: number): Promise<StockScore[]> {
+async function _getStockScores(runId: number, limit?: number): Promise<StockScore[]> {
   const query = db
     .select()
     .from(stockScores)
@@ -207,7 +211,7 @@ export type ScannerResult = {
   compositeScore: number | null;
 };
 
-export async function getScannerResults(runId: number): Promise<ScannerResult[]> {
+async function _getScannerResults(runId: number): Promise<ScannerResult[]> {
   const [scannerRows, scoreRows] = await Promise.all([
     db.select().from(scannerResults).where(eq(scannerResults.runId, runId)),
     db.select().from(stockScores).where(eq(stockScores.runId, runId)),
@@ -246,7 +250,7 @@ export type NewsArticle = {
   published: Date | null;
 };
 
-export async function getNewsArticles(runId: number): Promise<NewsArticle[]> {
+async function _getNewsArticles(runId: number): Promise<NewsArticle[]> {
   const rows = await db
     .select()
     .from(newsArticles)
@@ -278,7 +282,7 @@ export type EarningsEvent = {
   actualRevenue: number | null;
 };
 
-export async function getEarningsEvents(runId: number): Promise<EarningsEvent[]> {
+async function _getEarningsEvents(runId: number): Promise<EarningsEvent[]> {
   const rows = await db
     .select()
     .from(earningsEvents)
@@ -332,7 +336,7 @@ export type CatalystNewsItem = {
   time: string | null;
 };
 
-export async function getCatalystData(runId: number): Promise<CatalystTimelineData | null> {
+async function _getCatalystData(runId: number): Promise<CatalystTimelineData | null> {
   const [timeline] = await db
     .select()
     .from(catalystTimeline)
@@ -410,7 +414,7 @@ export type BacktestPick = {
   end_price?: number;
 };
 
-export async function getBacktestData(runId: number): Promise<BacktestData | null> {
+async function _getBacktestData(runId: number): Promise<BacktestData | null> {
   const [row] = await db
     .select()
     .from(backtestResults)
@@ -465,7 +469,7 @@ export type PicksAccuracySummary = {
   sectorBreakdown: { sector: string; picks: number; wins: number; winRate: number; avgReturn: number }[];
 };
 
-export async function getPicksAccuracy(): Promise<PicksAccuracySummary | null> {
+async function _getPicksAccuracy(): Promise<PicksAccuracySummary | null> {
   const { picksHistory } = await import("@/lib/db/schema");
   const rows = await db
     .select()
@@ -564,3 +568,16 @@ export async function getPicksAccuracy(): Promise<PicksAccuracySummary | null> {
     sectorBreakdown,
   };
 }
+
+// ----- Cached Exports (revalidate every hour, data changes once daily) -----
+
+export const getLatestRun = unstable_cache(_getLatestRun, ["latest-run"], { revalidate: CACHE_TTL });
+export const getMarketSummary = unstable_cache(_getMarketSummary, ["market-summary"], { revalidate: CACHE_TTL });
+export const getSectorPerformance = unstable_cache(_getSectorPerformance, ["sector-perf"], { revalidate: CACHE_TTL });
+export const getStockScores = unstable_cache(_getStockScores, ["stock-scores"], { revalidate: CACHE_TTL });
+export const getScannerResults = unstable_cache(_getScannerResults, ["scanner-results"], { revalidate: CACHE_TTL });
+export const getNewsArticles = unstable_cache(_getNewsArticles, ["news-articles"], { revalidate: CACHE_TTL });
+export const getEarningsEvents = unstable_cache(_getEarningsEvents, ["earnings-events"], { revalidate: CACHE_TTL });
+export const getCatalystData = unstable_cache(_getCatalystData, ["catalyst-data"], { revalidate: CACHE_TTL });
+export const getBacktestData = unstable_cache(_getBacktestData, ["backtest-data"], { revalidate: CACHE_TTL });
+export const getPicksAccuracy = unstable_cache(_getPicksAccuracy, ["picks-accuracy"], { revalidate: CACHE_TTL });

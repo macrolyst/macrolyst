@@ -11,6 +11,8 @@ import {
   ReferenceLine,
 } from "recharts";
 
+import { useIsMobile } from "./use-is-mobile";
+
 type PerformanceData = {
   portfolioReturn: number | null;
   benchmarkReturn: number | null;
@@ -18,6 +20,7 @@ type PerformanceData = {
 };
 
 export function PerformanceChart({ data }: { data: PerformanceData }) {
+  const isMobile = useIsMobile();
   const chartData = [
     { name: "Our Picks", value: data.portfolioReturn ?? 0 },
     { name: "S&P 500", value: data.benchmarkReturn ?? 0 },
@@ -39,6 +42,7 @@ export function PerformanceChart({ data }: { data: PerformanceData }) {
           tickLine={false}
         />
         <Tooltip
+          trigger={isMobile ? "click" : "hover"}
           contentStyle={{
             background: "#1a2235",
             border: "1px solid rgba(255,255,255,0.06)",

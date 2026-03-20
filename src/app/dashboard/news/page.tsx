@@ -29,7 +29,7 @@ export default async function NewsCatalystsPage() {
         </div>
 
         <div className="lg:col-span-2 card-glow p-6 overflow-y-auto min-h-0">
-          <p className="text-xs text-(--text-secondary) uppercase tracking-wider mb-4 sticky top-0 bg-(--surface-1) pb-2 z-10">Catalyst Timeline</p>
+          <p className="text-xs text-(--text-secondary) uppercase tracking-wider mb-4">Catalyst Timeline</p>
           {catalyst ? (
             <CatalystDetail catalyst={catalyst} />
           ) : (

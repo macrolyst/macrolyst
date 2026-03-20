@@ -1,13 +1,6 @@
-import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth/server";
 import { Sidebar } from "@/components/sidebar";
 
-export const dynamic = "force-dynamic";
-
-export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const session = await auth.getSession();
-  if (!session?.data?.user) redirect("/auth/sign-in");
-
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex flex-col md:flex-row min-h-screen bg-(--surface-0)">
       <Sidebar />

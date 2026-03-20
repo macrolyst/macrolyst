@@ -11,8 +11,10 @@ import {
   ReferenceLine,
 } from "recharts";
 import type { SectorData } from "@/lib/db/queries";
+import { useIsMobile } from "./use-is-mobile";
 
 export function SectorChart({ sectors }: { sectors: SectorData[] }) {
+  const isMobile = useIsMobile();
   const sorted = [...sectors].sort((a, b) => (b.avgChange ?? 0) - (a.avgChange ?? 0));
   const data = sorted.map((s) => ({
     name: s.sector,
@@ -39,6 +41,7 @@ export function SectorChart({ sectors }: { sectors: SectorData[] }) {
           tickLine={false}
         />
         <Tooltip
+          trigger={isMobile ? "click" : "hover"}
           contentStyle={{
             background: "#1a2235",
             border: "1px solid rgba(255,255,255,0.06)",

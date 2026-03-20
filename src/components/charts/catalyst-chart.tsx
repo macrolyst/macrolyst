@@ -10,8 +10,10 @@ import {
   ReferenceDot,
 } from "recharts";
 import type { CatalystHourData } from "@/lib/db/queries";
+import { useIsMobile } from "./use-is-mobile";
 
 export function CatalystChart({ hours }: { hours: CatalystHourData[] }) {
+  const isMobile = useIsMobile();
   const data = hours.map((h) => ({
     time: h.time,
     price: h.close,
@@ -50,6 +52,7 @@ export function CatalystChart({ hours }: { hours: CatalystHourData[] }) {
           width={50}
         />
         <Tooltip
+          trigger={isMobile ? "click" : "hover"}
           contentStyle={{
             background: "#1a2235",
             border: "1px solid rgba(255,255,255,0.06)",
