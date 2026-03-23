@@ -60,10 +60,11 @@ export function WatchlistView({ items }: { items: WatchlistItem[] }) {
                   <div className="flex items-center gap-3">
                     <span className="text-sm font-semibold text-white">{item.ticker}</span>
                     {quote && (
-                      <>
+                      <div className="flex items-center gap-1.5">
+                        <span className={`w-1.5 h-1.5 rounded-full ${marketOpen ? "bg-(--up) pulse-dot" : "bg-(--text-secondary)/40"}`} />
                         <span className="text-sm text-white font-mono">{formatCurrency(quote.price)}</span>
                         <ChangeBadge value={quote.changePercent} className="text-xs" />
-                      </>
+                      </div>
                     )}
                   </div>
                   <div className="flex items-center gap-2">

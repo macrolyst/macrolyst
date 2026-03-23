@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { formatCurrency } from "@/lib/format";
+import * as wsManager from "@/lib/ws-manager";
 import {
   AreaChart,
   Area,
@@ -12,21 +13,32 @@ import {
 } from "recharts";
 
 type Candle = { date: string; close: number };
-type Range = { label: string; days: number };
+type LiveTick = { time: string; close: number };
 
-const RANGES: Range[] = [
+const RANGES = [
+  { label: "Live", days: 0 },
   { label: "1W", days: 7 },
   { label: "1M", days: 30 },
   { label: "3M", days: 90 },
 ];
 
 export function StockChart({ symbol }: { symbol: string }) {
-  const [range, setRange] = useState(30);
+  const [range, setRange] = useState(wsManager.isAvailable() ? 0 : 30);
   const [candles, setCandles] = useState<Candle[]>([]);
+  const [liveTicks, setLiveTicks] = useState<LiveTick[]>([]);
   const [loading, setLoading] = useState(true);
+  const registrationRef = useRef<string | null>(null);
 
+  const isLive = range === 0;
+
+  // Historical data fetch
   useEffect(() => {
+    if (isLive) {
+      setLoading(false);
+      return;
+    }
     let cancelled = false;
+    setLoading(true);
     (async () => {
       try {
         const res = await fetch(`/api/prices/candles?symbol=${symbol}&days=${range}`);
@@ -37,28 +49,72 @@ export function StockChart({ symbol }: { symbol: string }) {
       }
     })();
     return () => { cancelled = true; };
-  }, [symbol, range]);
+  }, [symbol, range, isLive]);
 
-  if (loading) {
+  // Live WebSocket ticks
+  useEffect(() => {
+    if (!isLive || !wsManager.isAvailable()) return;
+
+    setLiveTicks([]);
+    registrationRef.current = wsManager.register([symbol]);
+
+    const onPrice = (sym: string, price: number) => {
+      if (sym !== symbol.toUpperCase()) return;
+      const now = new Date();
+      const time = now.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", second: "2-digit" });
+      setLiveTicks((prev) => {
+        const next = [...prev, { time, close: price }];
+        return next.length > 500 ? next.slice(-500) : next;
+      });
+    };
+
+    wsManager.addPriceListener(onPrice);
+
+    return () => {
+      wsManager.removePriceListener(onPrice);
+      if (registrationRef.current) {
+        wsManager.unregister(registrationRef.current);
+        registrationRef.current = null;
+      }
+    };
+  }, [symbol, isLive]);
+
+  // Loading state
+  if (loading && !isLive) {
     return <div className="h-[140px] flex items-center justify-center"><div className="w-5 h-5 border-2 border-(--accent)/30 border-t-(--accent) rounded-full animate-spin" /></div>;
   }
 
-  if (candles.length < 2) {
-    return <div className="h-[140px] flex items-center justify-center"><p className="text-xs text-(--text-secondary)/40">No chart data</p></div>;
+  // Determine chart data
+  const isLiveMode = isLive;
+  const chartData = isLiveMode
+    ? liveTicks.map((t) => ({ date: t.time, close: t.close }))
+    : candles;
+
+  if (chartData.length < 2) {
+    return (
+      <div>
+        <div className="h-[140px] flex items-center justify-center">
+          <p className="text-xs text-(--text-secondary)/40">
+            {isLiveMode ? "Waiting for live data..." : "No chart data"}
+          </p>
+        </div>
+        <ChartRangeTabs range={range} setRange={setRange} wsAvailable={wsManager.isAvailable()} />
+      </div>
+    );
   }
 
-  const first = candles[0].close;
-  const last = candles[candles.length - 1].close;
+  const first = chartData[0].close;
+  const last = chartData[chartData.length - 1].close;
   const isUp = last >= first;
   const color = isUp ? "#34D399" : "#F87171";
-  const min = Math.min(...candles.map((c) => c.close));
-  const max = Math.max(...candles.map((c) => c.close));
+  const min = Math.min(...chartData.map((c) => c.close));
+  const max = Math.max(...chartData.map((c) => c.close));
   const padding = (max - min) * 0.1 || 1;
 
   return (
     <div>
       <ResponsiveContainer width="100%" height={140}>
-        <AreaChart data={candles} margin={{ top: 4, right: 0, bottom: 0, left: 0 }}>
+        <AreaChart data={chartData} margin={{ top: 4, right: 0, bottom: 0, left: 0 }}>
           <defs>
             <linearGradient id={`stockGrad-${symbol}`} x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor={color} stopOpacity={0.2} />
@@ -79,9 +135,18 @@ export function StockChart({ symbol }: { symbol: string }) {
         </AreaChart>
       </ResponsiveContainer>
 
-      {/* Range tabs */}
-      <div className="flex justify-center gap-1 mt-2">
-        {RANGES.map((r) => (
+      <ChartRangeTabs range={range} setRange={setRange} wsAvailable={wsManager.isAvailable()} />
+    </div>
+  );
+}
+
+function ChartRangeTabs({ range, setRange, wsAvailable }: { range: number; setRange: (r: number) => void; wsAvailable: boolean }) {
+  return (
+    <div className="flex justify-center gap-1 mt-2">
+      {RANGES.map((r) => {
+        // Hide Live tab if WS not configured
+        if (r.days === 0 && !wsAvailable) return null;
+        return (
           <button
             key={r.days}
             onClick={() => setRange(r.days)}
@@ -93,8 +158,8 @@ export function StockChart({ symbol }: { symbol: string }) {
           >
             {r.label}
           </button>
-        ))}
-      </div>
+        );
+      })}
     </div>
   );
 }

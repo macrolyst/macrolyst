@@ -316,16 +316,18 @@ export function TradingView({
                 >
                   <div className="text-left">
                     <p className="text-sm font-semibold text-white">{h.ticker}</p>
-                    <p className="text-[10px] text-(--text-secondary)">{h.shares} share{h.shares > 1 ? "s" : ""}</p>
+                    <p className="text-[10px] text-(--text-secondary)">{h.shares} share{h.shares > 1 ? "s" : ""} @ {formatCurrency(h.avgCost)}</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm font-mono text-white">{formatCurrency(h.shares * currentPrice)}</p>
                     <div className="flex items-center gap-1.5 justify-end">
-                      <span className={`text-[10px] font-mono ${pl >= 0 ? "text-(--up)" : "text-(--down)"}`}>
-                        {pl >= 0 ? "+" : ""}{formatCurrency(pl)}
-                      </span>
-                      <ChangeBadge value={plPct} className="text-[10px]" />
+                      {quote && <span className={`w-1.5 h-1.5 rounded-full ${marketOpen ? "bg-(--up) pulse-dot" : "bg-(--text-secondary)/40"}`} />}
+                      <p className="text-sm font-mono text-white">{formatCurrency(currentPrice)}</p>
+                      {quote && <ChangeBadge value={quote.changePercent} className="text-[10px]" />}
                     </div>
+                    <p className="text-[10px] font-mono text-(--text-secondary)">{formatCurrency(h.shares * currentPrice)} total</p>
+                    <span className={`text-[10px] font-mono ${pl >= 0 ? "text-(--up)" : "text-(--down)"}`}>
+                      {pl >= 0 ? "+" : ""}{formatCurrency(pl)} ({plPct >= 0 ? "+" : ""}{plPct.toFixed(2)}%)
+                    </span>
                   </div>
                 </button>
               );
@@ -350,10 +352,11 @@ export function TradingView({
                   <p className="text-sm font-semibold text-white">{item.ticker}</p>
                   <div className="text-right">
                     {quote ? (
-                      <>
+                      <div className="flex items-center gap-1.5 justify-end">
+                        <span className={`w-1.5 h-1.5 rounded-full ${marketOpen ? "bg-(--up) pulse-dot" : "bg-(--text-secondary)/40"}`} />
                         <p className="text-sm font-mono text-white">{formatCurrency(quote.price)}</p>
                         <ChangeBadge value={quote.changePercent} className="text-[10px]" />
-                      </>
+                      </div>
                     ) : (
                       <p className="text-xs text-(--text-secondary)">--</p>
                     )}
