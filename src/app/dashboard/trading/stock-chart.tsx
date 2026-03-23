@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { formatCurrency } from "@/lib/format";
 import * as wsManager from "@/lib/ws-manager";
 import {
@@ -26,28 +26,33 @@ export function StockChart({ symbol }: { symbol: string }) {
   const [range, setRange] = useState(wsManager.isAvailable() ? 0 : 30);
   const [candles, setCandles] = useState<Candle[]>([]);
   const [liveTicks, setLiveTicks] = useState<LiveTick[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [fetchState, setFetchState] = useState<"idle" | "loading" | "done">(range === 0 ? "idle" : "loading");
   const registrationRef = useRef<string | null>(null);
 
   const isLive = range === 0;
 
+  const handleRangeChange = useCallback((newRange: number) => {
+    setRange(newRange);
+    if (newRange === 0) {
+      setFetchState("idle");
+      setLiveTicks([]);
+    } else {
+      setFetchState("loading");
+    }
+  }, []);
+
   // Historical data fetch
   useEffect(() => {
-    if (isLive) {
-      setLoading(false);
-      return;
-    }
+    if (isLive) return;
     let cancelled = false;
-    setLoading(true);
-    (async () => {
-      try {
-        const res = await fetch(`/api/prices/candles?symbol=${symbol}&days=${range}`);
-        const data = await res.json();
-        if (!cancelled) { setCandles(data); setLoading(false); }
-      } catch {
-        if (!cancelled) { setCandles([]); setLoading(false); }
-      }
-    })();
+    fetch(`/api/prices/candles?symbol=${symbol}&days=${range}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (!cancelled) { setCandles(data); setFetchState("done"); }
+      })
+      .catch(() => {
+        if (!cancelled) { setCandles([]); setFetchState("done"); }
+      });
     return () => { cancelled = true; };
   }, [symbol, range, isLive]);
 
@@ -55,7 +60,6 @@ export function StockChart({ symbol }: { symbol: string }) {
   useEffect(() => {
     if (!isLive || !wsManager.isAvailable()) return;
 
-    setLiveTicks([]);
     registrationRef.current = wsManager.register([symbol]);
 
     const onPrice = (sym: string, price: number) => {
@@ -80,13 +84,12 @@ export function StockChart({ symbol }: { symbol: string }) {
   }, [symbol, isLive]);
 
   // Loading state
-  if (loading && !isLive) {
+  if (!isLive && fetchState === "loading") {
     return <div className="h-[140px] flex items-center justify-center"><div className="w-5 h-5 border-2 border-(--accent)/30 border-t-(--accent) rounded-full animate-spin" /></div>;
   }
 
   // Determine chart data
-  const isLiveMode = isLive;
-  const chartData = isLiveMode
+  const chartData = isLive
     ? liveTicks.map((t) => ({ date: t.time, close: t.close }))
     : candles;
 
@@ -95,10 +98,10 @@ export function StockChart({ symbol }: { symbol: string }) {
       <div>
         <div className="h-[140px] flex items-center justify-center">
           <p className="text-xs text-(--text-secondary)/40">
-            {isLiveMode ? "Waiting for live data..." : "No chart data"}
+            {isLive ? "Waiting for live data..." : "No chart data"}
           </p>
         </div>
-        <ChartRangeTabs range={range} setRange={setRange} wsAvailable={wsManager.isAvailable()} />
+        <ChartRangeTabs range={range} setRange={handleRangeChange} wsAvailable={wsManager.isAvailable()} />
       </div>
     );
   }
@@ -135,7 +138,7 @@ export function StockChart({ symbol }: { symbol: string }) {
         </AreaChart>
       </ResponsiveContainer>
 
-      <ChartRangeTabs range={range} setRange={setRange} wsAvailable={wsManager.isAvailable()} />
+      <ChartRangeTabs range={range} setRange={handleRangeChange} wsAvailable={wsManager.isAvailable()} />
     </div>
   );
 }
@@ -144,7 +147,6 @@ function ChartRangeTabs({ range, setRange, wsAvailable }: { range: number; setRa
   return (
     <div className="flex justify-center gap-1 mt-2">
       {RANGES.map((r) => {
-        // Hide Live tab if WS not configured
         if (r.days === 0 && !wsAvailable) return null;
         return (
           <button
