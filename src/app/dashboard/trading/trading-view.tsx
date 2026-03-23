@@ -3,6 +3,8 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { executeTrade, resetPortfolio, type Holding } from "@/lib/actions/trading";
+import { createOrder, cancelOrder, updateOrder, type PendingOrder } from "@/lib/actions/orders";
+import { useOrderExecutor } from "./use-order-executor";
 import { addToWatchlist, removeFromWatchlist } from "@/lib/actions/watchlist";
 import { formatCurrency } from "@/lib/format";
 import { ChangeBadge } from "@/components/ui/change-badge";
@@ -67,11 +69,13 @@ export function TradingView({
   portfolio,
   holdings: initialHoldings,
   trades: tradeHistory,
+  pendingOrders: initialOrders,
   watchlistItems,
 }: {
   portfolio: Portfolio;
   holdings: Holding[];
   trades: Trade[];
+  pendingOrders: PendingOrder[];
   watchlistItems: WatchlistItem[];
 }) {
   const router = useRouter();
@@ -84,7 +88,9 @@ export function TradingView({
   const [executing, setExecuting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastTrade, setLastTrade] = useState<string | null>(null);
-  const [tab, setTab] = useState<"portfolio" | "watchlist" | "history">("portfolio");
+  const [tab, setTab] = useState<"portfolio" | "watchlist" | "history" | "orders">("portfolio");
+  const [orderType, setOrderType] = useState<"market" | "limit" | "stop_loss">("market");
+  const [targetPrice, setTargetPrice] = useState("");
   const [resetting, setResetting] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
 
@@ -95,18 +101,25 @@ export function TradingView({
     const set = new Set<string>();
     initialHoldings.forEach((h) => set.add(h.ticker));
     watchlistItems.forEach((w) => set.add(w.ticker));
+    initialOrders.forEach((o) => set.add(o.ticker));
     if (selectedTicker) set.add(selectedTicker);
     return Array.from(set);
-  }, [initialHoldings, watchlistItems, selectedTicker]);
+  }, [initialHoldings, watchlistItems, initialOrders, selectedTicker]);
 
   const { prices, marketOpen } = useLivePrices(allTickers);
 
+  // Order executor — checks pending orders against live prices
+  useOrderExecutor(initialOrders, prices, () => router.refresh());
+
   // Portfolio calculations
+  const reservedCash = initialOrders
+    .filter((o) => o.orderType === "limit_buy" && o.status === "pending")
+    .reduce((sum, o) => sum + o.targetPrice * o.shares, 0);
   const holdingsValue = initialHoldings.reduce((sum, h) => {
     const price = prices.get(h.ticker)?.price ?? h.avgCost;
     return sum + h.shares * price;
   }, 0);
-  const totalValue = portfolio.currentCash + holdingsValue;
+  const totalValue = portfolio.currentCash + reservedCash + holdingsValue;
   const totalGain = totalValue - portfolio.startingBalance;
   const totalGainPct = portfolio.startingBalance > 0 ? (totalGain / portfolio.startingBalance) * 100 : 0;
   const isPositive = totalGain >= 0;
@@ -127,7 +140,11 @@ export function TradingView({
   const selectedQuote = selectedTicker ? prices.get(selectedTicker) : null;
   const selectedHolding = selectedTicker ? initialHoldings.find((h) => h.ticker === selectedTicker) : null;
   const isInWatchlist = selectedTicker ? watchlistItems.some((w) => w.ticker === selectedTicker) : false;
-  const estimatedTotal = selectedQuote?.price && shares ? selectedQuote.price * parseInt(shares) : 0;
+  const priceForEstimate = orderType === "market" ? selectedQuote?.price : (parseFloat(targetPrice) || 0);
+  const estimatedTotal = priceForEstimate && shares ? priceForEstimate * parseInt(shares) : 0;
+  const sharesNum = parseInt(shares) || 0;
+  const insufficientCash = action === "buy" && estimatedTotal > portfolio.currentCash;
+  const insufficientShares = action === "sell" && selectedHolding ? sharesNum > selectedHolding.shares : false;
 
   async function handleTrade() {
     if (!selectedTicker || !shares || parseInt(shares) <= 0) return;
@@ -135,11 +152,25 @@ export function TradingView({
     setError(null);
     setLastTrade(null);
     try {
-      const result = await executeTrade(portfolio.id, selectedTicker, action, parseInt(shares));
-      setLastTrade(
-        `${result.action === "buy" ? "Bought" : "Sold"} ${result.shares} ${result.ticker} at ${formatCurrency(result.price)}`
-      );
+      if (orderType === "market") {
+        const result = await executeTrade(portfolio.id, selectedTicker, action, parseInt(shares));
+        setLastTrade(
+          `${result.action === "buy" ? "Bought" : "Sold"} ${result.shares} ${result.ticker} at ${formatCurrency(result.price)}`
+        );
+      } else {
+        const tp = parseFloat(targetPrice);
+        if (!tp || tp <= 0) throw new Error("Enter a valid target price");
+        const ot = orderType === "limit"
+          ? (action === "buy" ? "limit_buy" : "limit_sell")
+          : "stop_loss";
+        await createOrder(portfolio.id, selectedTicker, ot as "limit_buy" | "limit_sell" | "stop_loss", tp, parseInt(shares));
+        setLastTrade(
+          `${orderType === "limit" ? "Limit" : "Stop-loss"} order placed: ${action} ${shares} ${selectedTicker} at ${formatCurrency(tp)}`
+        );
+      }
       setShares("");
+      setTargetPrice("");
+      setOrderType("market");
       router.refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Trade failed");
@@ -176,6 +207,8 @@ export function TradingView({
   function selectStock(ticker: string) {
     setSelectedTicker(ticker);
     setShares("");
+    setTargetPrice("");
+    setOrderType("market");
     setError(null);
     setLastTrade(null);
     setAction("buy");
@@ -210,6 +243,12 @@ export function TradingView({
               <span className={`w-2 h-2 rounded-full ${marketOpen ? "bg-(--up) pulse-dot" : "bg-(--text-secondary)/40"}`} />
               <span className="text-[10px] text-(--text-secondary)">{marketOpen ? "Live" : "Closed"}</span>
             </div>
+            <button
+              onClick={() => setShowResetConfirm(true)}
+              className="text-[10px] text-(--text-secondary)/50 hover:text-(--down) cursor-pointer transition-colors px-2 py-1 rounded"
+            >
+              Reset
+            </button>
           </div>
         </div>
 
@@ -229,6 +268,9 @@ export function TradingView({
           <div>
             <p className="text-[10px] text-(--text-secondary) uppercase">Cash</p>
             <p className="text-sm font-bold text-white">{formatCurrency(portfolio.currentCash)}</p>
+            {reservedCash > 0 && (
+              <p className="text-[10px] text-(--gold)">{formatCurrency(reservedCash)} reserved</p>
+            )}
           </div>
           <div>
             <p className="text-[10px] text-(--text-secondary) uppercase">Invested</p>
@@ -241,8 +283,8 @@ export function TradingView({
         </div>
       </div>
 
-      {/* Tabs + reset */}
-      <div className="flex items-center justify-between border-b border-(--border)">
+      {/* Tabs */}
+      <div className="flex items-center justify-center border-b border-(--border)">
         <div className="flex gap-4">
           <button
             onClick={() => setTab("portfolio")}
@@ -261,6 +303,14 @@ export function TradingView({
             Watchlist
           </button>
           <button
+            onClick={() => setTab("orders")}
+            className={`text-sm pb-2.5 cursor-pointer transition-colors border-b-2 ${
+              tab === "orders" ? "text-white border-(--accent)" : "text-(--text-secondary) border-transparent hover:text-white"
+            }`}
+          >
+            Orders{initialOrders.length > 0 ? ` (${initialOrders.length})` : ""}
+          </button>
+          <button
             onClick={() => setTab("history")}
             className={`text-sm pb-2.5 cursor-pointer transition-colors border-b-2 ${
               tab === "history" ? "text-white border-(--accent)" : "text-(--text-secondary) border-transparent hover:text-white"
@@ -269,12 +319,6 @@ export function TradingView({
             History
           </button>
         </div>
-        <button
-          onClick={() => setShowResetConfirm(true)}
-          className="text-[10px] text-(--text-secondary)/50 hover:text-(--down) cursor-pointer transition-colors pb-2.5"
-        >
-          Reset
-        </button>
       </div>
 
       {/* Reset confirmation */}
@@ -400,6 +444,15 @@ export function TradingView({
         </div>
       )}
 
+      {tab === "orders" && (
+        <>
+          <OrdersTab orders={initialOrders} prices={prices} onRefresh={() => router.refresh()} />
+          <p className="text-xs text-white text-center mt-3">
+            Pending orders execute automatically when the target price is reached. Keep this page open and active during market hours for orders to trigger.
+          </p>
+        </>
+      )}
+
       {/* Trade modal */}
       {selectedTicker && (
         <>
@@ -476,22 +529,71 @@ export function TradingView({
               {/* Buy/Sell toggle */}
               <div className="flex gap-1 mb-4 bg-(--surface-0) rounded-lg p-1">
                 <button
-                  onClick={() => setAction("buy")}
+                  onClick={() => { setAction("buy"); setOrderType("market"); }}
                   className={`flex-1 py-2 rounded-md text-sm font-medium cursor-pointer transition-colors ${
                     action === "buy" ? "bg-(--up)/20 text-(--up)" : "text-(--text-secondary)"
                   }`}
                 >
                   Buy
                 </button>
-                <button
-                  onClick={() => setAction("sell")}
-                  className={`flex-1 py-2 rounded-md text-sm font-medium cursor-pointer transition-colors ${
-                    action === "sell" ? "bg-(--down)/20 text-(--down)" : "text-(--text-secondary)"
-                  }`}
-                >
-                  Sell
-                </button>
+                {selectedHolding && selectedHolding.shares > 0 && (
+                  <button
+                    onClick={() => { setAction("sell"); setOrderType("market"); }}
+                    className={`flex-1 py-2 rounded-md text-sm font-medium cursor-pointer transition-colors ${
+                      action === "sell" ? "bg-(--down)/20 text-(--down)" : "text-(--text-secondary)"
+                    }`}
+                  >
+                    Sell
+                  </button>
+                )}
               </div>
+
+              {/* Order Type */}
+              <div className="flex gap-1 mb-4 bg-(--surface-0) rounded-lg p-1">
+                {(action === "buy"
+                  ? (["market", "limit"] as const)
+                  : (["market", "limit", "stop_loss"] as const)
+                ).map((ot) => (
+                  <button
+                    key={ot}
+                    onClick={() => setOrderType(ot)}
+                    className={`flex-1 py-1.5 rounded-md text-[11px] font-medium cursor-pointer transition-colors ${
+                      orderType === ot ? "bg-(--surface-3) text-white" : "text-(--text-secondary)"
+                    }`}
+                  >
+                    {ot === "market" ? "Market" : ot === "limit" ? "Limit" : "Stop-Loss"}
+                  </button>
+                ))}
+              </div>
+
+              {/* Order type description */}
+              {orderType !== "market" && (
+                <div className="mb-3 px-3 py-2 rounded-lg bg-(--surface-2)/40 border-l-2 border-(--accent)/40">
+                  <p className="text-[11px] text-(--text-secondary)">
+                    {orderType === "limit" && action === "buy" && "Limit Buy — buy when price drops to your target (buy cheaper)"}
+                    {orderType === "limit" && action === "sell" && "Limit Sell — sell when price rises to your target (sell higher)"}
+                    {orderType === "stop_loss" && "Stop-Loss — sell when price drops below your target (protect from losses)"}
+                  </p>
+                </div>
+              )}
+
+              {/* Target Price (for limit/stop-loss) */}
+              {orderType !== "market" && (
+                <div className="mb-4">
+                  <label className="text-[10px] text-(--text-secondary) uppercase tracking-wider mb-1.5 block">
+                    {orderType === "limit" ? "Limit Price" : "Stop Price"}
+                  </label>
+                  <input
+                    type="number"
+                    min="0.01"
+                    step="0.01"
+                    value={targetPrice}
+                    onChange={(e) => setTargetPrice(e.target.value)}
+                    placeholder={selectedQuote ? selectedQuote.price.toFixed(2) : "0.00"}
+                    className="w-full bg-(--surface-0) text-(--text-primary) border border-(--border) rounded-lg px-3 py-3 text-xl font-mono text-center focus:border-(--accent)/50 focus:outline-none placeholder:text-(--text-secondary)/20"
+                  />
+                </div>
+              )}
 
               {/* Shares */}
               <div className="mb-4">
@@ -509,30 +611,40 @@ export function TradingView({
 
               {/* Estimated total */}
               {estimatedTotal > 0 && (
-                <div className="flex items-center justify-between mb-4 text-sm">
-                  <span className="text-(--text-secondary)">Estimated Total</span>
-                  <span className="text-white font-bold font-mono">{formatCurrency(estimatedTotal)}</span>
+                <div className="mb-4">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-(--text-secondary)">Estimated Total</span>
+                    <span className="text-white font-bold font-mono">{formatCurrency(estimatedTotal)}</span>
+                  </div>
+                  {insufficientCash && (
+                    <p className="text-[10px] text-(--down) mt-1">Insufficient cash ({formatCurrency(portfolio.currentCash)} available)</p>
+                  )}
+                  {insufficientShares && (
+                    <p className="text-[10px] text-(--down) mt-1">Insufficient shares (you hold {selectedHolding?.shares ?? 0})</p>
+                  )}
                 </div>
               )}
 
               {/* Execute */}
               <button
                 onClick={handleTrade}
-                disabled={executing || !shares || parseInt(shares) <= 0}
+                disabled={executing || !shares || sharesNum <= 0 || insufficientCash || insufficientShares || (orderType !== "market" && (!targetPrice || parseFloat(targetPrice) <= 0))}
                 className={`w-full py-3.5 rounded-lg font-semibold text-sm cursor-pointer transition-all disabled:opacity-30 disabled:cursor-not-allowed active:scale-[0.98] ${
                   action === "buy"
                     ? "bg-(--up) text-(--surface-0) hover:brightness-110"
                     : "bg-(--down) text-white hover:brightness-110"
                 }`}
               >
-                {executing ? "Executing..." : `${action === "buy" ? "Buy" : "Sell"} ${selectedTicker}`}
+                {executing ? "Executing..." : orderType === "market"
+                  ? `${action === "buy" ? "Buy" : "Sell"} ${selectedTicker}`
+                  : `Place ${orderType === "limit" ? "Limit" : "Stop-Loss"} Order`}
               </button>
 
               {error && <p className="text-xs text-(--down) mt-3 text-center">{error}</p>}
               {lastTrade && <p className="text-xs text-(--up) mt-3 text-center">{lastTrade}</p>}
 
               <p className="text-[10px] text-(--text-secondary)/50 mt-4 text-center">
-                {formatCurrency(portfolio.currentCash)} buying power
+                {formatCurrency(portfolio.currentCash)} available{reservedCash > 0 ? ` (${formatCurrency(reservedCash)} reserved)` : ""}
               </p>
             </div>
 
@@ -571,6 +683,169 @@ export function TradingView({
           </div>
         </>
       )}
+    </div>
+  );
+}
+
+function OrdersTab({ orders, prices, onRefresh }: { orders: PendingOrder[]; prices: Map<string, { price: number }>; onRefresh: () => void }) {
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editPrice, setEditPrice] = useState("");
+  const [editShares, setEditShares] = useState("");
+  const [confirmCancelId, setConfirmCancelId] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  function startEdit(o: PendingOrder) {
+    setEditingId(o.id);
+    setEditPrice(o.targetPrice.toFixed(2));
+    setEditShares(o.shares.toString());
+  }
+
+  async function handleUpdate(orderId: string) {
+    const price = parseFloat(editPrice);
+    const shares = parseInt(editShares);
+    if (!price || price <= 0 || !shares || shares <= 0) return;
+    setBusy(true);
+    try {
+      await updateOrder(orderId, price, shares);
+      setEditingId(null);
+      onRefresh();
+    } catch { /* ignore */ }
+    finally { setBusy(false); }
+  }
+
+  async function handleCancel(orderId: string) {
+    setBusy(true);
+    try {
+      await cancelOrder(orderId);
+      setConfirmCancelId(null);
+      onRefresh();
+    } catch { /* ignore */ }
+    finally { setBusy(false); }
+  }
+
+  if (orders.length === 0) {
+    return (
+      <div className="card-glow overflow-hidden">
+        <p className="text-sm text-(--text-secondary) py-8 text-center">No pending orders. Use the Limit or Stop-Loss order type when trading.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="card-glow overflow-hidden">
+      <div className="divide-y divide-(--border)">
+        {orders.map((o) => {
+          const quote = prices.get(o.ticker);
+          const diff = quote ? ((quote.price - o.targetPrice) / o.targetPrice) * 100 : null;
+          const isEditing = editingId === o.id;
+          const isConfirmingCancel = confirmCancelId === o.id;
+
+          return (
+            <div key={o.id} className="py-3 px-4">
+              {/* Order info row */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="flex items-center gap-3">
+                    <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${
+                      o.orderType === "limit_buy" ? "bg-(--up)/15 text-(--up)"
+                        : o.orderType === "limit_sell" ? "bg-(--accent)/15 text-(--accent)"
+                        : "bg-(--down)/15 text-(--down)"
+                    }`}>
+                      {o.orderType === "limit_buy" ? "LIMIT BUY" : o.orderType === "limit_sell" ? "LIMIT SELL" : "STOP-LOSS"}
+                    </span>
+                    <span className="text-sm font-semibold text-white">{o.ticker}</span>
+                    <span className="text-xs text-(--text-secondary)">{o.shares} shares</span>
+                  </div>
+                  <div className="flex items-center gap-3 mt-1.5 ml-0.5">
+                    <span className="text-xs text-(--text-secondary)">Target: <span className="text-white font-mono">{formatCurrency(o.targetPrice)}</span></span>
+                    {quote && (
+                      <>
+                        <span className="text-xs text-(--text-secondary)">Now: <span className="text-white font-mono">{formatCurrency(quote.price)}</span></span>
+                        {diff !== null && (
+                          <span className={`text-xs font-mono ${diff >= 0 ? "text-(--up)" : "text-(--down)"}`}>
+                            {Math.abs(diff).toFixed(2)}% {diff >= 0 ? "above" : "below"} target
+                          </span>
+                        )}
+                      </>
+                    )}
+                  </div>
+                </div>
+                <div className="flex flex-col sm:flex-row items-end sm:items-center gap-1 sm:gap-2 shrink-0">
+                  <button
+                    onClick={() => startEdit(o)}
+                    className="text-xs text-(--accent) hover:underline cursor-pointer"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => setConfirmCancelId(o.id)}
+                    className="text-xs text-(--down) hover:underline cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+
+              {/* Edit form */}
+              {isEditing && (
+                <div className="mt-3 pt-3 border-t border-(--border) flex items-end gap-3">
+                  <div className="flex-1">
+                    <label className="text-[10px] text-(--text-secondary) uppercase block mb-1">Price</label>
+                    <input
+                      type="number" min="0.01" step="0.01" value={editPrice}
+                      onChange={(e) => setEditPrice(e.target.value)}
+                      className="w-full bg-(--surface-0) text-(--text-primary) border border-(--border) rounded-lg px-2 py-1.5 text-sm font-mono focus:border-(--accent)/50 focus:outline-none"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <label className="text-[10px] text-(--text-secondary) uppercase block mb-1">Shares</label>
+                    <input
+                      type="number" min="1" step="1" value={editShares}
+                      onChange={(e) => setEditShares(e.target.value.replace(/\D/g, ""))}
+                      className="w-full bg-(--surface-0) text-(--text-primary) border border-(--border) rounded-lg px-2 py-1.5 text-sm font-mono focus:border-(--accent)/50 focus:outline-none"
+                    />
+                  </div>
+                  <button
+                    onClick={() => handleUpdate(o.id)}
+                    disabled={busy}
+                    className="px-3 py-1.5 rounded-lg bg-(--accent) text-(--surface-0) text-xs font-semibold cursor-pointer disabled:opacity-50"
+                  >
+                    Save
+                  </button>
+                  <button
+                    onClick={() => setEditingId(null)}
+                    className="px-3 py-1.5 text-xs text-(--text-secondary) cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              )}
+
+              {/* Cancel confirmation */}
+              {isConfirmingCancel && (
+                <div className="mt-3 pt-3 border-t border-(--border) flex items-center justify-between">
+                  <p className="text-xs text-(--text-primary)">Cancel this order?</p>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setConfirmCancelId(null)}
+                      className="px-3 py-1.5 text-xs text-(--text-secondary) cursor-pointer"
+                    >
+                      No
+                    </button>
+                    <button
+                      onClick={() => handleCancel(o.id)}
+                      disabled={busy}
+                      className="px-3 py-1.5 text-xs bg-(--down) text-white rounded-lg cursor-pointer disabled:opacity-50"
+                    >
+                      {busy ? "..." : "Yes, Cancel"}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

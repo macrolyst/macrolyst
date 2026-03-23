@@ -1,4 +1,5 @@
 import { getPortfolio, getHoldings, getTradeHistory } from "@/lib/actions/trading";
+import { getPendingOrders } from "@/lib/actions/orders";
 import { getWatchlist } from "@/lib/actions/watchlist";
 import { PortfolioSetup } from "./portfolio-setup";
 import { TradingView } from "./trading-view";
@@ -18,10 +19,11 @@ export default async function PaperTradingPage() {
     );
   }
 
-  const [holdings, tradesList, watchlistItems] = await Promise.all([
+  const [holdings, tradesList, watchlistItems, orders] = await Promise.all([
     getHoldings(portfolio.id),
     getTradeHistory(portfolio.id),
     getWatchlist(),
+    getPendingOrders(portfolio.id),
   ]);
 
   return (
@@ -38,6 +40,7 @@ export default async function PaperTradingPage() {
         }}
         holdings={holdings}
         trades={tradesList}
+        pendingOrders={orders}
         watchlistItems={watchlistItems.map((w) => ({ ticker: w.ticker }))}
       />
     </div>

@@ -66,6 +66,24 @@ export const challengeSnapshots = pgTable(
   ]
 );
 
+export const pendingOrders = pgTable(
+  "pending_orders",
+  {
+    id: uuid().defaultRandom().primaryKey(),
+    portfolioId: uuid("portfolio_id").notNull().references(() => portfolios.id, { onDelete: "cascade" }),
+    ticker: text().notNull(),
+    orderType: text("order_type").notNull(), // limit_buy, limit_sell, stop_loss
+    targetPrice: decimal("target_price", { precision: 10, scale: 2 }).notNull(),
+    shares: integer().notNull(),
+    status: text().default("pending"), // pending, filled, cancelled
+    createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
+    filledAt: timestamp("filled_at", { mode: "date" }),
+  },
+  (table) => [
+    index("pending_orders_portfolio_status_idx").on(table.portfolioId, table.status),
+  ]
+);
+
 export const watchlist = pgTable(
   "watchlist",
   {
