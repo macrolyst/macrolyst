@@ -143,3 +143,35 @@ export async function searchSymbol(query: string): Promise<SearchResult[]> {
     return [];
   }
 }
+
+export type NewsArticle = {
+  id: number;
+  headline: string;
+  source: string;
+  url: string;
+  summary: string;
+  image: string;
+  datetime: number;
+  category: string;
+  related: string;
+};
+
+export async function getMarketNews(): Promise<NewsArticle[]> {
+  const key = "market-news";
+  const cached = getCached<NewsArticle[]>(key);
+  if (cached) return cached;
+
+  try {
+    const res = await fetch(
+      `${FINNHUB_BASE}/news?category=general&token=${API_KEY}`,
+      { cache: "no-store" }
+    );
+    if (!res.ok) return [];
+    const articles: NewsArticle[] = await res.json();
+    const result = articles.slice(0, 50);
+    setCache(key, result, 300000); // 5 min cache
+    return result;
+  } catch {
+    return [];
+  }
+}
