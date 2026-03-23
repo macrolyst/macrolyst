@@ -29,15 +29,17 @@ export function Pricing() {
               <ul className="space-y-3 mb-8">
                 {[
                   "Daily S&P 500 analysis (500+ stocks)",
-                  "Technical scanners (RSI, MACD, Golden Cross, Volume)",
+                  "Real-time WebSocket price streaming",
+                  "Market screeners (Most Active, Gainers, Losers, Shorted, Undervalued)",
+                  "Technical scanners (RSI, MACD, Bollinger, Volume)",
                   "Paper trading with $100k simulated capital",
-                  "Challenge mode: you vs. the algorithm",
-                  "Market news with sentiment scoring",
+                  "Limit orders and stop-loss orders",
+                  "Live news feed and trending tickers",
                   "Earnings calendar and impact analysis",
                   "Hour-by-hour catalyst timeline",
-                  "Historical backtest results",
-                  "Real-time prices during market hours",
-                  "Full trade history and performance tracking",
+                  "Historical backtest and accuracy tracking",
+                  "Live intraday stock charts",
+                  "Portfolio allocation breakdown",
                 ].map((item) => (
                   <li key={item} className="flex items-start gap-3 text-sm">
                     <svg className="w-4 h-4 text-(--up) mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>

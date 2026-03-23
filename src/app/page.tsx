@@ -8,7 +8,6 @@ import { StatsBar } from "@/components/landing/stats-bar";
 import { Features } from "@/components/landing/features";
 import { HowItWorks } from "@/components/landing/how-it-works";
 import { DataSources } from "@/components/landing/data-sources";
-import { ChallengeSection } from "@/components/landing/challenge-section";
 import { Pricing } from "@/components/landing/pricing";
 import { Faq } from "@/components/landing/faq";
 import { Cta } from "@/components/landing/cta";
@@ -19,7 +18,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Macrolyst - S&P 500 Market Analysis & Paper Trading",
   description:
-    "Daily S&P 500 analysis with technical scoring, paper trading, and challenge mode. Prove the data works by competing against the algorithm. Free forever.",
+    "Free S&P 500 analysis with real-time prices, market screeners, technical scanners, and paper trading. Educational platform for learning to trade. Not financial advice.",
   keywords: [
     "stock market analysis",
     "S&P 500",
@@ -33,18 +32,18 @@ export const metadata: Metadata = {
     "trading simulator",
   ],
   openGraph: {
-    title: "Macrolyst - Market Analysis You Can Prove",
+    title: "Macrolyst - S&P 500 Analysis & Paper Trading",
     description:
-      "Daily S&P 500 analysis, paper trading engine, and challenge mode. See our picks and prove if they work.",
+      "Free S&P 500 analysis, real-time prices, market screeners, and paper trading. Educational platform for learning to trade.",
     type: "website",
     url: "https://macrolyst.com",
     siteName: "Macrolyst",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Macrolyst - Market Analysis You Can Prove",
+    title: "Macrolyst - S&P 500 Analysis & Paper Trading",
     description:
-      "S&P 500 scoring, technical scanners, paper trading, and challenge mode. Free forever.",
+      "Free S&P 500 analysis, real-time prices, market screeners, and paper trading for learning.",
   },
 };
 
@@ -60,7 +59,6 @@ export default async function Home() {
       <Features />
       <HowItWorks />
       <DataSources />
-      <ChallengeSection />
       <Pricing />
       <Faq />
       <Cta />

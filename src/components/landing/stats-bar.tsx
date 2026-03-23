@@ -1,9 +1,9 @@
 const stats = [
   { value: "500+", label: "Stocks Analyzed Daily" },
   { value: "5", label: "Data Sources" },
-  { value: "50+", label: "Technical Indicators" },
+  { value: "Real-Time", label: "WebSocket Prices" },
   { value: "$100k", label: "Paper Trading Capital" },
-  { value: "6 AM", label: "Pre-Market Updates" },
+  { value: "1 AM", label: "Pre-Market Updates" },
   { value: "100%", label: "Free" },
 ];
 

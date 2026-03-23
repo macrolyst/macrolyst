@@ -9,11 +9,11 @@ export function Cta() {
 
       <div className="relative max-w-3xl mx-auto text-center">
         <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white font-(family-name:--font-source-serif) leading-tight mb-4">
-          Prove it yourself.
+          Start learning today.
         </h2>
         <p className="text-lg text-(--text-secondary) mb-10 max-w-md mx-auto">
-          See our daily picks, trade with simulated capital, and challenge the algorithm.
-          The data speaks for itself.
+          Real-time market data, daily analysis, live screeners, and paper trading.
+          All free. All educational. No real money required.
         </p>
         <Link
           href="/auth/sign-up"

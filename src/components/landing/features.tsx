@@ -8,38 +8,38 @@ const features = [
   },
   {
     tag: "02",
-    title: "Technical Scanners",
-    desc: "Six specialized scanners run every morning to surface stocks matching specific technical patterns. Stop scrolling charts manually -- let the scanner find setups for you.",
-    highlights: ["RSI Oversold (<30)", "Golden Cross detection", "Volume breakout alerts"],
-    icon: "M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z",
+    title: "Real-Time Market Data",
+    desc: "Live stock prices streamed via WebSocket during market hours. Live charts, trending tickers, and real-time portfolio updates. No delays, no refreshing.",
+    highlights: ["WebSocket price streaming", "Live intraday charts", "Trending tickers from Yahoo"],
+    icon: "M13 10V3L4 14h7v7l9-11h-7z",
   },
   {
     tag: "03",
-    title: "Paper Trading Engine",
-    desc: "Trade with $100,000 in simulated capital. Real prices, real execution, zero risk. Build and track your portfolio with full P&L history and performance charts.",
-    highlights: ["Real-time market prices", "Full trade history", "Portfolio performance tracking"],
-    icon: "M13 7h8m0 0v8m0-8l-8 8-4-4-6 6",
+    title: "Market Screeners",
+    desc: "Discover opportunities with live market screeners. Most Active by volume, top Gainers and Losers, Most Shorted stocks, and Undervalued Large Caps -- all refreshed every 15 minutes.",
+    highlights: ["Most Active stocks", "Gainers & Losers", "Most Shorted & Undervalued"],
+    icon: "M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z",
   },
   {
     tag: "04",
-    title: "Challenge Mode",
-    desc: "The feature that makes Macrolyst different. Start a challenge, pick your stocks, and compete head-to-head against our algorithm. Track who performs better over 7, 14, or 30 days.",
-    highlights: ["You vs. the algorithm", "Daily portfolio snapshots", "Win/loss track record"],
-    icon: "M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9",
+    title: "Paper Trading Engine",
+    desc: "Trade with $100,000 in simulated capital. Market orders, limit orders, and stop-losses. Real prices with slippage simulation, full P&L tracking, and portfolio performance charts.",
+    highlights: ["Limit orders & stop-loss", "Real-time execution", "Portfolio allocation chart"],
+    icon: "M13 7h8m0 0v8m0-8l-8 8-4-4-6 6",
   },
   {
     tag: "05",
-    title: "Earnings Intelligence",
-    desc: "Upcoming earnings calendar filtered to S&P 500 stocks. Past earnings analysis shows how stocks moved on beats vs misses, so you know what to expect.",
-    highlights: ["7-day forward calendar", "Beat/miss price impact", "EPS surprise tracking"],
-    icon: "M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z",
+    title: "Technical Scanners",
+    desc: "Six specialized scanners run every morning to surface stocks matching specific technical patterns. Stop scrolling charts manually -- let the scanner find setups for you.",
+    highlights: ["RSI Oversold (<30)", "MACD Bullish Crossover", "Volume breakout alerts"],
+    icon: "M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z",
   },
   {
     tag: "06",
-    title: "What Happened Yesterday",
-    desc: "Hour-by-hour breakdown of the previous trading session with SPY price action matched to news events. Understand exactly what moved the market and whether those catalysts carry into today.",
-    highlights: ["Hourly SPY price bars", "News-to-price matching", "Market narrative generation"],
-    icon: "M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z",
+    title: "Earnings & News",
+    desc: "Live market news feed from Finnhub updated throughout the day. Earnings calendar with beat/miss analysis. Hourly catalyst timeline showing what moved the market yesterday.",
+    highlights: ["Live news feed", "Earnings beat/miss tracking", "Hourly catalyst timeline"],
+    icon: "M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z",
   },
 ];
 
@@ -50,7 +50,7 @@ export function Features() {
         <div className="text-center mb-16">
           <p className="text-xs tracking-[0.2em] uppercase text-(--accent) mb-4">Features</p>
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white font-(family-name:--font-source-serif) leading-tight">
-            Everything to analyze,<br />trade, and compete.
+            Everything to analyze,<br />trade, and discover.
           </h2>
           <p className="mt-4 text-(--text-secondary) max-w-lg mx-auto">
             Built for traders who want data-driven decisions without the noise.

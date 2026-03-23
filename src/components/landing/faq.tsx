@@ -5,27 +5,31 @@ import { useState } from "react";
 const faqs = [
   {
     q: "Is this financial advice?",
-    a: "No. Macrolyst is a data platform for educational and informational purposes only. We provide analysis and tools, but all trading decisions are yours. Paper trading uses simulated money with zero real financial risk.",
+    a: "No. Macrolyst is an educational platform for learning about the stock market. It is not financial advice. All analysis, scores, and recommendations are for educational and informational purposes only. Paper trading uses simulated money with zero real financial risk. Always consult a qualified financial advisor before making real investment decisions.",
   },
   {
     q: "Where does the data come from?",
-    a: "We pull from five public data sources: Yahoo Finance for prices and fundamentals, Finnhub for news and earnings, FRED for macro indicators, and Wikipedia for S&P 500 constituents. Every data point is verifiable.",
+    a: "We use five public data sources: Yahoo Finance for prices, fundamentals, market screeners, and trending tickers. Finnhub for live news, real-time WebSocket prices, and earnings data. FRED for macro indicators like VIX and Treasury yields. Wikipedia for S&P 500 constituents. Every data point is verifiable.",
   },
   {
     q: "How does the scoring work?",
     a: "Each stock receives a composite score based on five weighted factors: analyst price target upside (30%), technical indicators like RSI and MACD (25%), price momentum (20%), news sentiment (15%), and volume signals (10%). The methodology is fully transparent on the dashboard.",
   },
   {
-    q: "What is Challenge Mode?",
-    a: "You start with $100k in simulated capital and pick your own stocks. Our algorithm simultaneously picks its top 10 stocks. Over 7, 14, or 30 days, you see who performs better via a side-by-side portfolio chart. It is a personal challenge -- you are not competing against other users unless you opt into the public leaderboard.",
+    q: "What are the market screeners?",
+    a: "We offer five live market screeners powered by Yahoo Finance, refreshed every 15 minutes: Most Active (by volume), Top Gainers, Top Losers, Most Shorted stocks, and Undervalued Large Caps. Each shows price, volume, change, and a buy button to practice paper trading.",
+  },
+  {
+    q: "How does paper trading work?",
+    a: "You start with $100,000 in simulated capital. You can place market orders (execute immediately at current price), limit orders (buy when price drops to your target, or sell when it rises), and stop-loss orders (sell when price drops below a level to limit losses). Trades execute at real market prices with simulated slippage. No real money is involved.",
   },
   {
     q: "Is it really free?",
-    a: "Yes. All features are included at no cost. There is no premium tier, no trial period, and no credit card required. We built this as a portfolio project and data platform, not a subscription service.",
+    a: "Yes. All features are included at no cost. There is no premium tier, no trial period, and no credit card required. We built this as an educational platform, not a subscription service.",
   },
   {
     q: "How often is the data updated?",
-    a: "The analysis pipeline runs every weekday at 6 AM CST, before market open. During market hours (9:30 AM - 4 PM ET), prices update in near real-time. The catalyst timeline updates daily with the previous session's data.",
+    a: "The analysis pipeline runs every weekday at 1 AM CST, well before market open. During market hours (6 AM - 6 PM CST), stock prices stream in real-time via WebSocket. Live news updates every 5 minutes. Market screeners refresh every 15 minutes.",
   },
   {
     q: "Can I use this on mobile?",
