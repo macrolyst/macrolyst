@@ -191,10 +191,10 @@ function PortfolioSnapshot({ portfolio, holdings }: { portfolio: Portfolio | nul
   if (!portfolio) {
     return (
       <div className="card-glow p-6 text-center h-full flex flex-col items-center justify-center">
-        <p className="text-xs text-(--text-secondary) uppercase tracking-wider mb-3">Portfolio</p>
-        <p className="text-sm text-(--text-secondary) mb-4">Start paper trading to track your portfolio here.</p>
+        <p className="text-xs text-(--text-secondary) uppercase tracking-wider mb-3">Paper Trading</p>
+        <p className="text-sm text-(--text-secondary) mb-4">Start paper trading to track your performance here.</p>
         <Link href="/dashboard/trading" className="inline-block px-4 py-2 rounded-lg bg-(--accent) text-(--surface-0) text-sm font-semibold hover:brightness-110 transition-all">
-          Create Portfolio
+          Start Paper Trading
         </Link>
       </div>
     );
@@ -404,14 +404,29 @@ export function DashboardClient({
       <div className="space-y-4">
         <CurrentNews />
 
-        {/* Active Challenges */}
-        <div className="card-glow p-6 text-center">
-          <p className="text-xs text-(--text-secondary) uppercase tracking-wider mb-3">Challenges</p>
-          <p className="text-sm text-(--text-secondary) mb-4">Compete against our algorithm with paper trading.</p>
-          <Link href="/dashboard/challenges" className="inline-block px-4 py-2 rounded-lg bg-(--surface-3) text-white text-sm font-semibold hover:bg-(--surface-3)/80 transition-all">
-            Start a Challenge
-          </Link>
-        </div>
+        {/* Upcoming Earnings */}
+        {earningsPreviews.length > 0 && (
+          <div className="card-glow p-5">
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-xs text-(--text-secondary) uppercase tracking-wider">Upcoming Earnings</p>
+              <Link href="/dashboard/earnings" className="text-[10px] text-(--accent) hover:underline">View all</Link>
+            </div>
+            <div className="space-y-2">
+              {earningsPreviews.map((e) => (
+                <div key={e.ticker} className="flex items-center justify-between py-1.5">
+                  <div>
+                    <span className="text-xs font-semibold text-white">{e.ticker}</span>
+                    <span className="text-[10px] text-(--text-secondary) ml-2">{e.name}</span>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-[10px] text-(--text-secondary)">{e.eventDate}</span>
+                    {e.timing && <span className="text-[10px] text-(--text-secondary)/50 ml-1">({e.timing})</span>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* RIGHT COLUMN */}
@@ -434,30 +449,6 @@ export function DashboardClient({
                   <p className="text-sm font-bold text-white">{marketMood.vix.toFixed(2)}</p>
                 </div>
               )}
-            </div>
-          </div>
-        )}
-
-        {/* Upcoming Earnings */}
-        {earningsPreviews.length > 0 && (
-          <div className="card-glow p-5">
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-xs text-(--text-secondary) uppercase tracking-wider">Upcoming Earnings</p>
-              <Link href="/dashboard/earnings" className="text-[10px] text-(--accent) hover:underline">View all</Link>
-            </div>
-            <div className="space-y-2">
-              {earningsPreviews.map((e) => (
-                <div key={e.ticker} className="flex items-center justify-between py-1.5">
-                  <div>
-                    <span className="text-xs font-semibold text-white">{e.ticker}</span>
-                    <span className="text-[10px] text-(--text-secondary) ml-2">{e.name}</span>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-[10px] text-(--text-secondary)">{e.eventDate}</span>
-                    {e.timing && <span className="text-[10px] text-(--text-secondary)/50 ml-1">({e.timing})</span>}
-                  </div>
-                </div>
-              ))}
             </div>
           </div>
         )}
