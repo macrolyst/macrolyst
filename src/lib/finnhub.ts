@@ -130,7 +130,7 @@ export async function searchSymbol(query: string): Promise<SearchResult[]> {
     if (!res.ok) return [];
     const d = await res.json();
     const results: SearchResult[] = (d.result || [])
-      .filter((r: { type: string }) => r.type === "Common Stock")
+      .filter((r: { type: string }) => ["Common Stock", "ETF", "ETP"].includes(r.type))
       .slice(0, 10)
       .map((r: { symbol: string; description: string; type: string }) => ({
         symbol: r.symbol,

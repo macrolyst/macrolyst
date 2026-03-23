@@ -85,7 +85,7 @@ export function StockChart({ symbol }: { symbol: string }) {
 
   // Loading state
   if (!isLive && fetchState === "loading") {
-    return <div className="h-[140px] flex items-center justify-center"><div className="w-5 h-5 border-2 border-(--accent)/30 border-t-(--accent) rounded-full animate-spin" /></div>;
+    return <div className="h-35 flex items-center justify-center"><div className="w-5 h-5 border-2 border-(--accent)/30 border-t-(--accent) rounded-full animate-spin" /></div>;
   }
 
   // Determine chart data
@@ -96,7 +96,7 @@ export function StockChart({ symbol }: { symbol: string }) {
   if (chartData.length < 2) {
     return (
       <div>
-        <div className="h-[140px] flex items-center justify-center">
+        <div className="h-35 flex items-center justify-center">
           <p className="text-xs text-(--text-secondary)/40">
             {isLive ? "Waiting for live data..." : "No chart data"}
           </p>

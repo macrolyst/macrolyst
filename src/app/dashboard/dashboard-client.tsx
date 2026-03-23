@@ -151,7 +151,7 @@ function MarketCharts() {
 
       {/* Chart */}
       {fetchState === "loading" ? (
-        <div className="h-[160px] flex items-center justify-center">
+        <div className="h-40 flex items-center justify-center">
           <div className="w-5 h-5 border-2 border-(--accent)/30 border-t-(--accent) rounded-full animate-spin" />
         </div>
       ) : hasData ? (
@@ -175,7 +175,7 @@ function MarketCharts() {
           </AreaChart>
         </ResponsiveContainer>
       ) : (
-        <div className="h-[160px] flex items-center justify-center">
+        <div className="h-40 flex items-center justify-center">
           <p className="text-xs text-(--text-secondary)/40">No chart data</p>
         </div>
       )}
