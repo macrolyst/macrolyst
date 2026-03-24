@@ -70,7 +70,7 @@ function timeAgo(timestamp: number): string {
 // --- Market Chart ---
 function MarketCharts() {
   const [activeTicker, setActiveTicker] = useState("SPY");
-  const [range, setRange] = useState(30);
+  const [range, setRange] = useState(1);
   const [candles, setCandles] = useState<Candle[]>([]);
   const [fetchState, setFetchState] = useState<"loading" | "done">("loading");
 
@@ -124,7 +124,7 @@ function MarketCharts() {
           ))}
         </div>
         <div className="flex gap-1">
-          {[{ l: "1W", d: 7 }, { l: "1M", d: 30 }, { l: "3M", d: 90 }].map((r) => (
+          {[{ l: "1D", d: 1 }, { l: "1W", d: 7 }, { l: "1M", d: 30 }, { l: "3M", d: 90 }].map((r) => (
             <button
               key={r.d}
               onClick={() => handleRangeChange(r.d)}
