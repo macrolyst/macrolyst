@@ -93,7 +93,7 @@ export async function getCandles(symbol: string, days = 30): Promise<Candle[]> {
       if (closes[i] != null) {
         candles.push({
           date: days <= 1
-            ? new Date(timestamps[i] * 1000).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone: "America/New_York" })
+            ? new Date(timestamps[i] * 1000).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone: "America/Chicago" })
             : new Date(timestamps[i] * 1000).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
           close: Math.round(closes[i]! * 100) / 100,
         });

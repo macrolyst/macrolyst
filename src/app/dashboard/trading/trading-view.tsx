@@ -497,15 +497,15 @@ export function TradingView({
       {/* Trade modal */}
       {selectedTicker && (
         <>
-          <div className="fixed inset-0 z-40 bg-black/60" onClick={() => closeModal()} />
-          <div className="fixed inset-x-0 bottom-0 z-50 max-h-[85vh] overflow-y-auto rounded-t-2xl bg-(--surface-1) border-t border-(--border) lg:inset-auto lg:top-1/2 lg:left-1/2 lg:-translate-x-1/2 lg:-translate-y-1/2 lg:rounded-2xl lg:w-[420px] lg:max-h-[80vh]">
+          <div className="fixed inset-0 z-40 bg-black/60" />
+          <div className="fixed inset-x-0 bottom-0 z-50 max-h-[85vh] flex flex-col rounded-t-2xl bg-(--surface-1) border-t border-(--border) lg:inset-auto lg:top-1/2 lg:left-1/2 lg:-translate-x-1/2 lg:-translate-y-1/2 lg:rounded-2xl lg:w-[420px] lg:max-h-[80vh]">
             {/* Handle bar (mobile) */}
-            <div className="flex justify-center py-2 lg:hidden">
+            <div className="flex justify-center py-2 lg:hidden shrink-0">
               <div className="w-10 h-1 rounded-full bg-(--text-secondary)/20" />
             </div>
 
-            {/* Stock header */}
-            <div className="px-5 pt-2 pb-4 border-b border-(--border)">
+            {/* Stock header — sticky */}
+            <div className="px-5 pt-2 pb-4 border-b border-(--border) shrink-0 bg-(--surface-1) rounded-t-2xl">
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-lg font-bold text-white">{selectedTicker}</p>
@@ -560,6 +560,8 @@ export function TradingView({
               )}
             </div>
 
+            {/* Scrollable content */}
+            <div className="flex-1 overflow-y-auto">
             {/* Stock chart */}
             <div className="px-5 py-3 border-b border-(--border)">
               <StockChart symbol={selectedTicker} />
@@ -721,6 +723,7 @@ export function TradingView({
                 </div>
               );
             })()}
+            </div>
           </div>
         </>
       )}

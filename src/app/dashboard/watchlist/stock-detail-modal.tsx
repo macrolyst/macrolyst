@@ -53,7 +53,7 @@ export function StockDetailModal({
 
   return (
     <>
-      <div className="fixed inset-0 z-40 bg-black/60" onClick={onClose} />
+      <div className="fixed inset-0 z-40 bg-black/60" />
       <div className="fixed inset-x-0 bottom-0 z-50 max-h-[85vh] flex flex-col rounded-t-2xl bg-(--surface-1) border-t border-(--border) lg:inset-auto lg:top-1/2 lg:left-1/2 lg:-translate-x-1/2 lg:-translate-y-1/2 lg:rounded-2xl lg:w-[480px] lg:max-h-[80vh]">
         {/* Handle bar (mobile) */}
         <div className="flex justify-center py-2 lg:hidden">
