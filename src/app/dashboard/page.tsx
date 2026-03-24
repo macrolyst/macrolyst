@@ -1,5 +1,6 @@
 import { getLatestRun, getMarketSummary, getScannerResults, getEarningsEvents } from "@/lib/db/queries";
 import { getPortfolio, getHoldings } from "@/lib/actions/trading";
+import { getPendingOrders } from "@/lib/actions/orders";
 import { DashboardClient } from "./dashboard-client";
 
 const SCANNER_LABELS: Record<string, string> = {
@@ -17,7 +18,9 @@ export default async function DashboardPage() {
     getLatestRun(),
   ]);
 
-  const holdings = portfolio ? await getHoldings(portfolio.id) : [];
+  const [holdings, pendingOrders] = portfolio
+    ? await Promise.all([getHoldings(portfolio.id), getPendingOrders(portfolio.id)])
+    : [[], []];
 
   // Fetch analysis data if available
   let marketMood = null;
@@ -81,6 +84,9 @@ export default async function DashboardPage() {
           currentCash: Number(portfolio.currentCash),
         } : null}
         holdings={holdings}
+        reservedCash={pendingOrders
+          .filter((o) => o.orderType === "limit_buy" && o.status === "pending")
+          .reduce((sum, o) => sum + o.targetPrice * o.shares, 0)}
         marketMood={marketMood}
         scannerPreviews={scannerPreviews}
         earningsPreviews={earningsPreviews}

@@ -184,7 +184,7 @@ function MarketCharts() {
 }
 
 // --- Portfolio Snapshot ---
-function PortfolioSnapshot({ portfolio, holdings }: { portfolio: Portfolio | null; holdings: Holding[] }) {
+function PortfolioSnapshot({ portfolio, holdings, reservedCash = 0 }: { portfolio: Portfolio | null; holdings: Holding[]; reservedCash?: number }) {
   const tickers = holdings.map((h) => h.ticker);
   const { prices } = useLivePrices(tickers);
 
@@ -204,7 +204,7 @@ function PortfolioSnapshot({ portfolio, holdings }: { portfolio: Portfolio | nul
     const price = prices.get(h.ticker)?.price ?? h.avgCost;
     return sum + h.shares * price;
   }, 0);
-  const totalValue = portfolio.currentCash + holdingsValue;
+  const totalValue = portfolio.currentCash + reservedCash + holdingsValue;
   const totalGain = totalValue - portfolio.startingBalance;
   const totalGainPct = portfolio.startingBalance > 0 ? (totalGain / portfolio.startingBalance) * 100 : 0;
 
@@ -237,6 +237,9 @@ function PortfolioSnapshot({ portfolio, holdings }: { portfolio: Portfolio | nul
             </span>
           </div>
           <p className="text-[10px] text-(--text-secondary) mt-2">{formatCurrency(portfolio.currentCash)} cash</p>
+          {reservedCash > 0 && (
+            <p className="text-[10px] text-(--accent)">{formatCurrency(reservedCash)} reserved</p>
+          )}
         </div>
 
         {/* Donut chart */}
@@ -312,12 +315,15 @@ function TrendingTickers() {
 
   if (tickers.length === 0) return null;
 
+  // Duplicate the list for seamless loop
+  const doubled = [...tickers, ...tickers];
+
   return (
-    <div className="card-glow p-5">
-      <p className="text-xs text-(--text-secondary) uppercase tracking-wider mb-3">Trending Now</p>
-      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-2">
-        {tickers.map((t) => (
-          <div key={t.symbol} className="flex items-center gap-2 rounded-lg bg-(--surface-2) px-3 py-2 justify-center">
+    <div className="card-glow py-3 overflow-hidden">
+      <p className="text-xs text-(--text-secondary) uppercase tracking-wider mb-2 px-4">Trending Now</p>
+      <div className="flex ticker-tape">
+        {doubled.map((t, i) => (
+          <div key={`${t.symbol}-${i}`} className="flex items-center gap-2 px-4 shrink-0">
             <span className="text-xs font-semibold text-white">{t.symbol}</span>
             <span className="text-xs font-mono text-white">{formatCurrency(t.price)}</span>
             <ChangeBadge value={t.changePercent} className="text-[10px]" />
@@ -375,12 +381,14 @@ function CurrentNews() {
 export function DashboardClient({
   portfolio,
   holdings,
+  reservedCash = 0,
   marketMood,
   scannerPreviews,
   earningsPreviews,
 }: {
   portfolio: Portfolio | null;
   holdings: Holding[];
+  reservedCash?: number;
   marketMood: { breadth: string; vix: number | null; avgChange: number | null } | null;
   scannerPreviews: ScannerPreview[];
   earningsPreviews: EarningsPreview[];
@@ -391,7 +399,7 @@ export function DashboardClient({
     <div className="space-y-4">
       {/* TOP ROW: Portfolio + Market Charts side by side */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-stretch">
-        <PortfolioSnapshot portfolio={portfolio} holdings={holdings} />
+        <PortfolioSnapshot portfolio={portfolio} holdings={holdings} reservedCash={reservedCash} />
         <MarketCharts />
       </div>
 
