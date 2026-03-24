@@ -73,8 +73,9 @@ export async function getCandles(symbol: string, days = 30): Promise<Candle[]> {
 
   try {
     // Yahoo Finance chart API (free, no key needed)
-    const range = days <= 7 ? "5d" : days <= 30 ? "1mo" : "3mo";
-    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=${range}&interval=1d`;
+    const range = days <= 1 ? "1d" : days <= 7 ? "5d" : days <= 30 ? "1mo" : "3mo";
+    const interval = days <= 1 ? "5m" : "1d";
+    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=${range}&interval=${interval}`;
     const res = await fetch(url, {
       cache: "no-store",
       headers: { "User-Agent": "Mozilla/5.0" },
@@ -91,7 +92,9 @@ export async function getCandles(symbol: string, days = 30): Promise<Candle[]> {
     for (let i = 0; i < timestamps.length; i++) {
       if (closes[i] != null) {
         candles.push({
-          date: new Date(timestamps[i] * 1000).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+          date: days <= 1
+            ? new Date(timestamps[i] * 1000).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone: "America/New_York" })
+            : new Date(timestamps[i] * 1000).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
           close: Math.round(closes[i]! * 100) / 100,
         });
       }

@@ -31,6 +31,7 @@ const navGroups = [
   {
     label: "Trading",
     items: [
+      { href: "/dashboard/watchlist", label: "Watchlist", icon: "M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" },
       { href: "/dashboard/trading", label: "Paper Trading", icon: "M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" },
     ],
   },

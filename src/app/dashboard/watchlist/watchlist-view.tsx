@@ -8,12 +8,14 @@ import { ChangeBadge } from "@/components/ui/change-badge";
 import { TickerSearch } from "../trading/ticker-search";
 import { useLivePrices } from "../trading/use-live-prices";
 import Link from "next/link";
+import { StockDetailModal } from "./stock-detail-modal";
 
 type WatchlistItem = { ticker: string; addedAt: Date | null };
 
 export function WatchlistView({ items }: { items: WatchlistItem[] }) {
   const router = useRouter();
   const [removing, setRemoving] = useState<string | null>(null);
+  const [selectedTicker, setSelectedTicker] = useState<string | null>(null);
 
   const tickers = items.map((i) => i.ticker);
   const { prices, marketOpen } = useLivePrices(tickers);
@@ -56,18 +58,25 @@ export function WatchlistView({ items }: { items: WatchlistItem[] }) {
             {items.map((item) => {
               const quote = prices.get(item.ticker);
               return (
-                <div key={item.ticker} className="flex items-center justify-between py-3 px-1">
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm font-semibold text-white">{item.ticker}</span>
+                <div key={item.ticker} onClick={() => setSelectedTicker(item.ticker)} className="flex items-center justify-between py-3 px-1 cursor-pointer hover:bg-white/[0.02] transition-colors rounded-lg">
+                  <div className="flex items-center gap-4 flex-1 min-w-0">
+                    <span className="text-sm font-semibold text-white w-14 shrink-0">{item.ticker}</span>
                     {quote && (
-                      <div className="flex items-center gap-1.5">
-                        <span className={`w-1.5 h-1.5 rounded-full ${marketOpen ? "bg-(--up) pulse-dot" : "bg-(--text-secondary)/40"}`} />
-                        <span className="text-sm text-white font-mono">{formatCurrency(quote.price)}</span>
-                        <ChangeBadge value={quote.changePercent} className="text-xs" />
-                      </div>
+                      <>
+                        <div className="flex items-center gap-1.5">
+                          <span className={`w-1.5 h-1.5 rounded-full ${marketOpen ? "bg-(--up) pulse-dot" : "bg-(--text-secondary)/40"}`} />
+                          <span className="text-sm text-white font-mono">{formatCurrency(quote.price)}</span>
+                          <ChangeBadge value={quote.changePercent} className="text-xs" />
+                        </div>
+                        <div className="hidden sm:flex items-center gap-6 ml-auto mr-auto text-xs text-(--text-secondary)">
+                          <span>Open <span className="text-white font-mono ml-1">{formatCurrency(quote.open)}</span></span>
+                          <span>High <span className="text-white font-mono ml-1">{formatCurrency(quote.high)}</span></span>
+                          <span>Low <span className="text-white font-mono ml-1">{formatCurrency(quote.low)}</span></span>
+                        </div>
+                      </>
                     )}
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                     <Link
                       href={`/dashboard/trading?buy=${item.ticker}`}
                       className="text-xs text-(--accent) hover:underline"
@@ -88,6 +97,13 @@ export function WatchlistView({ items }: { items: WatchlistItem[] }) {
           </div>
         )}
       </div>
+
+      {selectedTicker && (
+        <StockDetailModal
+          symbol={selectedTicker}
+          onClose={() => setSelectedTicker(null)}
+        />
+      )}
     </div>
   );
 }

@@ -11,6 +11,8 @@ import { ChangeBadge } from "@/components/ui/change-badge";
 import { TickerSearch } from "./ticker-search";
 import { useLivePrices } from "./use-live-prices";
 import { StockChart } from "./stock-chart";
+import { RecommendationsDrawer } from "./recommendations-drawer";
+import { StockDetailModal } from "../watchlist/stock-detail-modal";
 import {
   AreaChart,
   Area,
@@ -71,12 +73,14 @@ export function TradingView({
   trades: tradeHistory,
   pendingOrders: initialOrders,
   watchlistItems,
+  topPicks = [],
 }: {
   portfolio: Portfolio;
   holdings: Holding[];
   trades: Trade[];
   pendingOrders: PendingOrder[];
   watchlistItems: WatchlistItem[];
+  topPicks?: { ticker: string; name: string; price: number; score: number; change: number }[];
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -93,6 +97,8 @@ export function TradingView({
   const [targetPrice, setTargetPrice] = useState("");
   const [resetting, setResetting] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [showDrawer, setShowDrawer] = useState(false);
+  const [detailTicker, setDetailTicker] = useState<string | null>(null);
 
   // Track portfolio value over time for the chart
   const [valueHistory, setValueHistory] = useState<{ value: number }[]>([]);
@@ -222,6 +228,21 @@ export function TradingView({
 
   return (
     <div className="space-y-4">
+      {/* Page header with Recommendations button */}
+      <div className="flex items-end justify-between">
+        <div>
+          <p className="text-xs tracking-[0.15em] uppercase text-(--accent) mb-1">Trading</p>
+          <h1 className="text-2xl font-bold text-white font-(family-name:--font-source-serif)">Paper Trading</h1>
+        </div>
+        <button
+          onClick={() => setShowDrawer(true)}
+          className="group inline-flex items-center gap-1.5 text-xs text-(--accent) font-semibold px-3 py-1.5 rounded-lg border border-(--accent)/30 hover:bg-(--accent)/10 cursor-pointer transition-colors"
+        >
+          Recommendations
+          <svg className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" /></svg>
+        </button>
+      </div>
+
       {/* Hero: Portfolio value + chart */}
       <div className="card-glow p-6">
         <div className="flex items-start justify-between mb-1">
@@ -292,7 +313,7 @@ export function TradingView({
               tab === "portfolio" ? "text-white border-(--accent)" : "text-(--text-secondary) border-transparent hover:text-white"
             }`}
           >
-            Portfolio
+            Portfolio{initialHoldings.length > 0 ? ` (${initialHoldings.length})` : ""}
           </button>
           <button
             onClick={() => setTab("watchlist")}
@@ -300,7 +321,7 @@ export function TradingView({
               tab === "watchlist" ? "text-white border-(--accent)" : "text-(--text-secondary) border-transparent hover:text-white"
             }`}
           >
-            Watchlist
+            Watchlist{watchlistItems.length > 0 ? ` (${watchlistItems.length})` : ""}
           </button>
           <button
             onClick={() => setTab("orders")}
@@ -316,7 +337,7 @@ export function TradingView({
               tab === "history" ? "text-white border-(--accent)" : "text-(--text-secondary) border-transparent hover:text-white"
             }`}
           >
-            History
+            History{tradeHistory.length > 0 ? ` (${tradeHistory.length})` : ""}
           </button>
         </div>
       </div>
@@ -353,27 +374,34 @@ export function TradingView({
               const pl = (h.shares * currentPrice) - h.totalCost;
               const plPct = h.totalCost > 0 ? (pl / h.totalCost) * 100 : 0;
               return (
-                <button
+                <div
                   key={h.ticker}
-                  onClick={() => selectStock(h.ticker)}
-                  className="w-full flex items-center justify-between px-4 py-3 border-b border-(--border) last:border-0 cursor-pointer transition-colors hover:bg-white/[0.02]"
+                  className="flex items-center justify-between px-4 py-3 border-b border-(--border) last:border-0 hover:bg-white/[0.02] transition-colors"
                 >
-                  <div className="text-left">
-                    <p className="text-sm font-semibold text-white">{h.ticker}</p>
+                  <button onClick={() => selectStock(h.ticker)} className="text-left cursor-pointer">
+                    <p className="text-sm font-semibold text-white hover:text-(--accent) transition-colors">{h.ticker}</p>
                     <p className="text-[10px] text-(--text-secondary)">{h.shares} share{h.shares > 1 ? "s" : ""} @ {formatCurrency(h.avgCost)}</p>
-                  </div>
-                  <div className="text-right">
-                    <div className="flex items-center gap-1.5 justify-end">
-                      {quote && <span className={`w-1.5 h-1.5 rounded-full ${marketOpen ? "bg-(--up) pulse-dot" : "bg-(--text-secondary)/40"}`} />}
-                      <p className="text-sm font-mono text-white">{formatCurrency(currentPrice)}</p>
-                      {quote && <ChangeBadge value={quote.changePercent} className="text-[10px]" />}
+                  </button>
+                  <div className="flex items-center gap-3">
+                    <div className="text-right">
+                      <div className="flex items-center gap-1.5 justify-end">
+                        {quote && <span className={`w-1.5 h-1.5 rounded-full ${marketOpen ? "bg-(--up) pulse-dot" : "bg-(--text-secondary)/40"}`} />}
+                        <p className="text-sm font-mono text-white">{formatCurrency(currentPrice)}</p>
+                        {quote && <ChangeBadge value={quote.changePercent} className="text-[10px]" />}
+                      </div>
+                      <p className="text-[10px] font-mono text-(--text-secondary)">{formatCurrency(h.shares * currentPrice)} total</p>
+                      <span className={`text-[10px] font-mono ${pl >= 0 ? "text-(--up)" : "text-(--down)"}`}>
+                        {pl >= 0 ? "+" : ""}{formatCurrency(pl)} ({plPct >= 0 ? "+" : ""}{plPct.toFixed(2)}%)
+                      </span>
                     </div>
-                    <p className="text-[10px] font-mono text-(--text-secondary)">{formatCurrency(h.shares * currentPrice)} total</p>
-                    <span className={`text-[10px] font-mono ${pl >= 0 ? "text-(--up)" : "text-(--down)"}`}>
-                      {pl >= 0 ? "+" : ""}{formatCurrency(pl)} ({plPct >= 0 ? "+" : ""}{plPct.toFixed(2)}%)
-                    </span>
+                    <button
+                      onClick={() => setDetailTicker(h.ticker)}
+                      className="text-[10px] text-(--text-secondary) hover:text-white cursor-pointer px-2 py-1 rounded border border-(--border) hover:border-(--text-secondary) transition-colors"
+                    >
+                      Details
+                    </button>
                   </div>
-                </button>
+                </div>
               );
             })
           )}
@@ -388,24 +416,37 @@ export function TradingView({
             watchlistItems.map((item) => {
               const quote = prices.get(item.ticker);
               return (
-                <button
+                <div
                   key={item.ticker}
-                  onClick={() => selectStock(item.ticker)}
-                  className="w-full flex items-center justify-between px-4 py-3 border-b border-(--border) last:border-0 cursor-pointer transition-colors hover:bg-white/[0.02]"
+                  className="flex items-center justify-between px-4 py-3 border-b border-(--border) last:border-0 hover:bg-white/[0.02] transition-colors"
                 >
-                  <p className="text-sm font-semibold text-white">{item.ticker}</p>
-                  <div className="text-right">
-                    {quote ? (
-                      <div className="flex items-center gap-1.5 justify-end">
-                        <span className={`w-1.5 h-1.5 rounded-full ${marketOpen ? "bg-(--up) pulse-dot" : "bg-(--text-secondary)/40"}`} />
-                        <p className="text-sm font-mono text-white">{formatCurrency(quote.price)}</p>
-                        <ChangeBadge value={quote.changePercent} className="text-[10px]" />
-                      </div>
-                    ) : (
-                      <p className="text-xs text-(--text-secondary)">--</p>
+                  <div className="flex items-center gap-4 flex-1 min-w-0">
+                    <button onClick={() => selectStock(item.ticker)} className="text-sm font-semibold text-white hover:text-(--accent) cursor-pointer transition-colors w-14 shrink-0 text-left">
+                      {item.ticker}
+                    </button>
+                    {quote && (
+                      <>
+                        <div className="flex items-center gap-1.5">
+                          <span className={`w-1.5 h-1.5 rounded-full ${marketOpen ? "bg-(--up) pulse-dot" : "bg-(--text-secondary)/40"}`} />
+                          <span className="text-sm font-mono text-white">{formatCurrency(quote.price)}</span>
+                          <ChangeBadge value={quote.changePercent} className="text-xs" />
+                        </div>
+                        <div className="hidden sm:flex items-center gap-6 ml-auto mr-auto text-xs text-(--text-secondary)">
+                          <span>Open <span className="text-white font-mono ml-1">{formatCurrency(quote.open)}</span></span>
+                          <span>High <span className="text-white font-mono ml-1">{formatCurrency(quote.high)}</span></span>
+                          <span>Low <span className="text-white font-mono ml-1">{formatCurrency(quote.low)}</span></span>
+                        </div>
+                      </>
                     )}
+                    {!quote && <p className="text-xs text-(--text-secondary)">--</p>}
                   </div>
-                </button>
+                  <button
+                    onClick={() => setDetailTicker(item.ticker)}
+                    className="text-[10px] text-(--text-secondary) hover:text-white cursor-pointer px-2 py-1 rounded border border-(--border) hover:border-(--text-secondary) transition-colors shrink-0"
+                  >
+                    Details
+                  </button>
+                </div>
               );
             })
           )}
@@ -683,6 +724,23 @@ export function TradingView({
           </div>
         </>
       )}
+
+      {/* Stock Detail Modal */}
+      {detailTicker && (
+        <StockDetailModal
+          symbol={detailTicker}
+          onClose={() => setDetailTicker(null)}
+          onBuy={(s) => { setDetailTicker(null); selectStock(s); }}
+        />
+      )}
+
+      {/* Recommendations Drawer */}
+      <RecommendationsDrawer
+        open={showDrawer}
+        onClose={() => setShowDrawer(false)}
+        onBuy={(symbol) => selectStock(symbol)}
+        topPicks={topPicks}
+      />
     </div>
   );
 }
