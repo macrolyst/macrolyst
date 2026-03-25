@@ -19,13 +19,6 @@ type Section = {
   stocks: Stock[];
 };
 
-function formatVolume(v: number): string {
-  if (v >= 1_000_000_000) return `${(v / 1_000_000_000).toFixed(1)}B`;
-  if (v >= 1_000_000) return `${(v / 1_000_000).toFixed(1)}M`;
-  if (v >= 1_000) return `${(v / 1_000).toFixed(1)}K`;
-  return v.toString();
-}
-
 type TopPick = { ticker: string; name: string; price: number; score: number; change: number };
 
 export function RecommendationsDrawer({
@@ -44,20 +37,13 @@ export function RecommendationsDrawer({
 
   useEffect(() => {
     if (!open) return;
-
-    Promise.all([
-      fetch("/api/prices/batch?symbols=SPY,QQQ,DIA,AAPL,MSFT,NVDA,TSLA,GOOGL,AMZN,META").then((r) => r.json()),
-      fetch("/api/trending").then((r) => r.json()),
-      fetch("/api/volume").then((r) => r.json()),
-      fetch("/api/movers?type=day_gainers").then((r) => r.json()),
-      fetch("/api/movers?type=day_losers").then((r) => r.json()),
-      fetch("/api/movers?type=most_shorted_stocks").then((r) => r.json()),
-      fetch("/api/movers?type=undervalued_large_caps").then((r) => r.json()),
-    ])
-      .then(([, trendingQuotes, volume, gainers, losers, shorted, undervalued]) => {
+    let cancelled = false;
+    fetch("/api/recommendations")
+      .then((r) => r.json())
+      .then((serverSections: Section[]) => {
+        if (cancelled) return;
         const result: Section[] = [];
-
-        // Pipeline Top Picks (from server)
+        // Pipeline Top Picks first (already on server, no API call)
         if (topPicks.length > 0) {
           result.push({
             title: "Top Picks (Pipeline)",
@@ -70,96 +56,12 @@ export function RecommendationsDrawer({
             })),
           });
         }
-
-        // Trending
-        if (Array.isArray(trendingQuotes) && trendingQuotes.length > 0) {
-          result.push({
-            title: "Trending",
-            stocks: trendingQuotes.slice(0, 5).map((q: { symbol: string; price: number; changePercent: number }) => ({
-              symbol: q.symbol,
-              name: "",
-              price: q.price,
-              changePercent: q.changePercent,
-            })),
-          });
-        }
-
-        // Most Active
-        const volData = volume?.stocks || volume;
-        if (Array.isArray(volData) && volData.length > 0) {
-          result.push({
-            title: "Most Active",
-            stocks: volData.slice(0, 10).map((s: { symbol: string; name: string; price: number; changePercent: number; volume: number; volumeRatio: number }) => ({
-              symbol: s.symbol,
-              name: s.name,
-              price: s.price,
-              changePercent: s.changePercent,
-              volume: formatVolume(s.volume),
-              volumeRatio: s.volumeRatio,
-            })),
-          });
-        }
-
-        // Gainers
-        const gData = gainers?.stocks || gainers;
-        if (Array.isArray(gData) && gData.length > 0) {
-          result.push({
-            title: "Top Gainers",
-            stocks: gData.slice(0, 5).map((s: { symbol: string; name: string; price: number; changePercent: number }) => ({
-              symbol: s.symbol,
-              name: s.name,
-              price: s.price,
-              changePercent: s.changePercent,
-            })),
-          });
-        }
-
-        // Losers
-        const lData = losers?.stocks || losers;
-        if (Array.isArray(lData) && lData.length > 0) {
-          result.push({
-            title: "Top Losers",
-            stocks: lData.slice(0, 5).map((s: { symbol: string; name: string; price: number; changePercent: number }) => ({
-              symbol: s.symbol,
-              name: s.name,
-              price: s.price,
-              changePercent: s.changePercent,
-            })),
-          });
-        }
-
-        // Shorted
-        const sData = shorted?.stocks || shorted;
-        if (Array.isArray(sData) && sData.length > 0) {
-          result.push({
-            title: "Most Shorted",
-            stocks: sData.slice(0, 5).map((s: { symbol: string; name: string; price: number; changePercent: number }) => ({
-              symbol: s.symbol,
-              name: s.name,
-              price: s.price,
-              changePercent: s.changePercent,
-            })),
-          });
-        }
-
-        // Undervalued
-        const uData = undervalued?.stocks || undervalued;
-        if (Array.isArray(uData) && uData.length > 0) {
-          result.push({
-            title: "Undervalued",
-            stocks: uData.slice(0, 5).map((s: { symbol: string; name: string; price: number; changePercent: number }) => ({
-              symbol: s.symbol,
-              name: s.name,
-              price: s.price,
-              changePercent: s.changePercent,
-            })),
-          });
-        }
-
+        result.push(...serverSections);
         setSections(result);
       })
       .catch(() => {})
-      .finally(() => setLoading(false));
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
   }, [open, topPicks]);
 
   if (!open) return null;
