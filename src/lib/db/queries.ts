@@ -434,6 +434,7 @@ async function _getBacktestData(runId: number): Promise<BacktestData | null> {
 // ----- Picks Accuracy Tracking -----
 
 export type PickHistoryEntry = {
+  runId: number;
   pickDate: string;
   ticker: string;
   name: string | null;
@@ -479,6 +480,7 @@ async function _getPicksAccuracy(): Promise<PicksAccuracySummary | null> {
   if (rows.length === 0) return null;
 
   const entries: PickHistoryEntry[] = rows.map((r) => ({
+    runId: r.runId,
     pickDate: r.pickDate,
     ticker: r.ticker,
     name: r.name,
