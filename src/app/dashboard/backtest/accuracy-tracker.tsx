@@ -123,46 +123,7 @@ export function AccuracyTracker({ data }: { data: PicksAccuracySummary }) {
               : null;
 
             return (
-              <div key={date} className="rounded-lg bg-(--surface-1) border border-(--border) overflow-hidden">
-                {/* Date header */}
-                <div className="flex items-center justify-between px-4 py-3 border-b border-(--border) bg-(--surface-2)/30">
-                  <div>
-                    <span className="text-sm font-semibold text-white">{formatDate(date)}</span>
-                    <span className="text-xs text-(--text-secondary) ml-2">{picks.length} picks</span>
-                  </div>
-                  {evaluated.length > 0 && (
-                    <div className="flex items-center gap-3">
-                      <span className={`text-xs font-medium ${wins >= evaluated.length / 2 ? "text-(--up)" : "text-(--down)"}`}>
-                        {wins}/{evaluated.length} won
-                      </span>
-                      <ChangeBadge value={avgRet} className="text-sm font-bold" />
-                    </div>
-                  )}
-                  {evaluated.length === 0 && (
-                    <span className="text-xs text-(--text-secondary)">Awaiting evaluation</span>
-                  )}
-                </div>
-
-                {/* Picks */}
-                <div className="divide-y divide-(--border)">
-                  {picks.map((pick, i) => (
-                    <div key={`${pick.ticker}-${i}`} className="px-4 py-2.5">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-mono text-(--text-secondary) w-4">#{pick.rank}</span>
-                          <span className="text-sm font-semibold text-white">{pick.ticker}</span>
-                          <span className="text-xs text-(--text-secondary) truncate max-w-40">{pick.name}</span>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <span className="text-xs text-(--text-secondary) font-mono">{formatCurrency(pick.priceAtPick)}</span>
-                          <ChangeBadge value={pick.return1d} className="text-xs font-semibold min-w-[3.5rem] text-right" />
-                        </div>
-                      </div>
-                      <p className="text-xs text-(--text-secondary)/70 mt-1 ml-6">{whyItHappened(pick)}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
+              <CollapsibleDay key={date} date={date} picks={picks} evaluated={evaluated} wins={wins} avgRet={avgRet} />
             );
           })}
         </div>
@@ -296,6 +257,95 @@ export function AccuracyTracker({ data }: { data: PicksAccuracySummary }) {
               </p>
             </>
           )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function CollapsibleDay({ date, picks, evaluated, wins, avgRet }: {
+  date: string;
+  picks: PicksAccuracySummary["recentPicks"];
+  evaluated: PicksAccuracySummary["recentPicks"];
+  wins: number;
+  avgRet: number | null;
+}) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className="rounded-lg bg-(--surface-1) border border-(--border) overflow-hidden">
+      <button
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center justify-between px-4 py-3 bg-(--surface-2)/30 cursor-pointer hover:bg-(--surface-2)/50 transition-colors"
+      >
+        <div className="flex items-center gap-2">
+          <svg className={`w-3.5 h-3.5 text-(--text-secondary) transition-transform ${open ? "rotate-90" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+          </svg>
+          <span className="text-sm font-semibold text-white">{formatDate(date)}</span>
+          <span className="text-xs text-(--text-secondary)">{picks.length} picks</span>
+        </div>
+        {evaluated.length > 0 && (
+          <div className="flex items-center gap-3">
+            <span className={`text-xs font-medium ${wins >= evaluated.length / 2 ? "text-(--up)" : "text-(--down)"}`}>
+              {wins}/{evaluated.length} won
+            </span>
+            <ChangeBadge value={avgRet} className="text-sm font-bold" />
+          </div>
+        )}
+        {evaluated.length === 0 && (
+          <span className="text-xs text-(--text-secondary)">Awaiting evaluation</span>
+        )}
+      </button>
+
+      {open && (
+        <div className="divide-y divide-(--border)">
+          {picks.map((pick, i) => {
+            const closePrice = pick.priceAtPick && pick.return1d != null
+              ? pick.priceAtPick * (1 + pick.return1d / 100)
+              : null;
+            return (
+              <div key={`${pick.ticker}-${i}`} className="px-4 py-2.5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-mono text-(--text-secondary) w-4">#{pick.rank}</span>
+                    <span className="text-sm font-semibold text-white">{pick.ticker}</span>
+                    <span className="text-xs text-(--text-secondary) truncate max-w-40">{pick.name}</span>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <div className="text-right">
+                      <p className="text-[10px] text-(--text-secondary)">Picked at</p>
+                      <span className="text-xs text-white font-mono">{formatCurrency(pick.priceAtPick)}</span>
+                    </div>
+                    {closePrice != null && (
+                      <div className="text-right">
+                        <p className="text-[10px] text-(--text-secondary)">Closed at</p>
+                        <span className="text-xs text-white font-mono">{formatCurrency(closePrice)}</span>
+                      </div>
+                    )}
+                    {closePrice != null && pick.priceAtPick && (
+                      <div className="text-right">
+                        <p className="text-[10px] text-(--text-secondary)">Change</p>
+                        <span className={`text-xs font-mono ${(closePrice - pick.priceAtPick) >= 0 ? "text-(--up)" : "text-(--down)"}`}>
+                          {(closePrice - pick.priceAtPick) >= 0 ? "+" : ""}{formatCurrency(closePrice - pick.priceAtPick)}
+                        </span>
+                      </div>
+                    )}
+                    <div className="text-right min-w-[3.5rem]">
+                      <p className="text-[10px] text-(--text-secondary)">Return</p>
+                      <ChangeBadge value={pick.return1d} className="text-xs font-semibold" />
+                    </div>
+                  </div>
+                </div>
+                {pick.return1d != null && (
+                  <p className="text-xs text-(--text-secondary)/70 mt-1 ml-6">{whyItHappened(pick)}</p>
+                )}
+                {pick.return1d == null && (
+                  <p className="text-xs text-(--text-secondary)/50 mt-1 ml-6">Awaiting next-day close data.</p>
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
     </div>

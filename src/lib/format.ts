@@ -37,6 +37,7 @@ export function formatDate(date: string | Date | null): string {
     month: "short",
     day: "numeric",
     year: "numeric",
+    timeZone: "America/Chicago",
   });
 }
 
