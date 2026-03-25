@@ -210,19 +210,16 @@ function CollapsibleDay({ date, picks, evaluated, wins, avgRet }: {
   avgRet: number | null;
 }) {
   const [open, setOpen] = useState(false);
-  const [scoresMap, setScoresMap] = useState<Record<string, ScoreData> | null>(null);
-
-  // Fetch all scores for this day — cached in localStorage since run data never changes
-  useEffect(() => {
-    if (!open || scoresMap) return;
-    const runId = picks[0]?.runId;
-    if (!runId) return;
-    const cacheKey = `scores-${runId}`;
+  const runId = picks[0]?.runId;
+  const cacheKey = `scores-${runId}`;
+  const [scoresMap, setScoresMap] = useState<Record<string, ScoreData> | null>(() => {
+    if (typeof window === "undefined") return null;
     const cached = localStorage.getItem(cacheKey);
-    if (cached) {
-      setScoresMap(JSON.parse(cached));
-      return;
-    }
+    return cached ? JSON.parse(cached) : null;
+  });
+
+  useEffect(() => {
+    if (!open || scoresMap || !runId) return;
     const tickers = picks.map((p) => p.ticker).join(",");
     let cancelled = false;
     fetch(`/api/scores?runId=${runId}&tickers=${tickers}`)
@@ -235,7 +232,7 @@ function CollapsibleDay({ date, picks, evaluated, wins, avgRet }: {
       })
       .catch(() => {});
     return () => { cancelled = true; };
-  }, [open, scoresMap, picks]);
+  }, [open, scoresMap, picks, runId, cacheKey]);
 
   return (
     <div className="rounded-lg bg-(--surface-1) border border-(--border) overflow-hidden">
