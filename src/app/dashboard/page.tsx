@@ -6,10 +6,12 @@ import { DashboardClient } from "./dashboard-client";
 const SCANNER_LABELS: Record<string, string> = {
   rsi_oversold: "RSI Oversold",
   macd_bullish: "MACD Bullish",
-  volume_breakout: "Volume Breakout",
+  volume_breakout: "Volume Spike",
   bollinger_oversold: "Bollinger Oversold",
-  near_52w_low: "52W Low",
+  near_52w_low: "Near Period Low",
   golden_cross: "Golden Cross",
+  biggest_losers: "Top Losers",
+  biggest_gainers: "Top Gainers",
 };
 
 export default async function DashboardPage() {

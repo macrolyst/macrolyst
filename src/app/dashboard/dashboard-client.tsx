@@ -30,15 +30,6 @@ type Portfolio = {
   currentCash: number;
 };
 
-type NewsArticle = {
-  id: number;
-  headline: string;
-  source: string;
-  url: string;
-  datetime: number;
-  related: string;
-};
-
 type Candle = { date: string; close: number };
 
 type ScannerPreview = {
@@ -334,17 +325,26 @@ function TrendingTickers() {
   );
 }
 
-// --- Current News ---
+// --- Current News (single API call for mixed feed) ---
+type MixedNewsItem = {
+  id: string;
+  headline: string;
+  source: string;
+  url: string;
+  timestamp: number;
+  tag: "market" | "headline" | "analysis";
+};
+
 function CurrentNews() {
-  const [articles, setArticles] = useState<NewsArticle[]>([]);
+  const [items, setItems] = useState<MixedNewsItem[]>([]);
   const [, setTick] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
     const fetchNews = async () => {
       try {
-        const res = await fetch("/api/news/live");
-        if (res.ok && !cancelled) setArticles(await res.json());
+        const res = await fetch("/api/news/mixed");
+        if (res.ok && !cancelled) setItems(await res.json());
       } catch { /* ignore */ }
     };
     fetchNews();
@@ -353,23 +353,25 @@ function CurrentNews() {
     return () => { cancelled = true; clearInterval(poll); clearInterval(tick); };
   }, []);
 
+  const tagColors: Record<string, string> = { market: "text-(--accent)/70", headline: "text-(--gold)/70", analysis: "text-(--up)/70" };
+
   return (
     <div className="card-glow p-5">
       <div className="flex items-center justify-between mb-3">
         <p className="text-xs text-(--text-secondary) uppercase tracking-wider">Current News</p>
         <Link href="/dashboard/live" className="text-[10px] text-(--accent) hover:underline">View all</Link>
       </div>
-      <div className="space-y-3">
-        {articles.slice(0, 4).map((a) => (
-          <a key={a.id} href={a.url} target="_blank" rel="noopener noreferrer" className="block group">
-            <p className="text-xs font-medium text-white group-hover:text-(--accent) transition-colors line-clamp-2">{a.headline}</p>
+      <div className="space-y-3 max-h-[200px] overflow-y-auto pr-1">
+        {items.map((item) => (
+          <a key={item.id} href={item.url} target="_blank" rel="noopener noreferrer" className="block group">
+            <p className="text-xs font-medium text-white group-hover:text-(--accent) transition-colors line-clamp-2">{item.headline}</p>
             <div className="flex items-center gap-2 mt-1">
-              <span className="text-[10px] text-(--accent)/70">{a.source}</span>
-              <span className="text-[10px] text-(--text-secondary)/50">{timeAgo(a.datetime)}</span>
+              <span className={`text-[10px] ${tagColors[item.tag]}`}>{item.source}</span>
+              <span className="text-[10px] text-(--text-secondary)/50">{timeAgo(item.timestamp)}</span>
             </div>
           </a>
         ))}
-        {articles.length === 0 && (
+        {items.length === 0 && (
           <p className="text-xs text-(--text-secondary) py-4 text-center">Loading news...</p>
         )}
       </div>
