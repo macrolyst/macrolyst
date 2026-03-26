@@ -269,7 +269,8 @@ function ExpandablePick({ pick, scores }: { pick: PicksAccuracySummary["recentPi
   return (
     <div>
       <button onClick={() => setExpanded(!expanded)} className="w-full px-4 py-2.5 cursor-pointer hover:bg-white/[0.02] transition-colors text-left">
-        <div className="flex items-center justify-between">
+        {/* Desktop row */}
+        <div className="hidden sm:flex items-center justify-between">
           <div className="flex items-center gap-2">
             <svg className={`w-3 h-3 text-(--text-secondary) transition-transform ${expanded ? "rotate-90" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
             <span className="text-xs font-mono text-(--text-secondary) w-4">#{pick.rank}</span>
@@ -285,11 +286,31 @@ function ExpandablePick({ pick, scores }: { pick: PicksAccuracySummary["recentPi
             <div className="text-right min-w-[3.5rem]"><p className="text-[10px] text-(--text-secondary)">Return</p><ChangeBadge value={pick.return1d} className="text-xs font-semibold" /></div>
           </div>
         </div>
-        {pick.return1d == null && <p className="text-xs text-(--text-secondary)/50 mt-1 ml-6">Awaiting next-day close data.</p>}
+        {/* Mobile stacked layout */}
+        <div className="sm:hidden">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <svg className={`w-3 h-3 text-(--text-secondary) transition-transform ${expanded ? "rotate-90" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+              <span className="text-xs font-mono text-(--text-secondary)">#{pick.rank}</span>
+              <span className="text-sm font-semibold text-white">{pick.ticker}</span>
+            </div>
+            <ChangeBadge value={pick.return1d} className="text-xs font-semibold" />
+          </div>
+          <p className="text-[10px] text-(--text-secondary) ml-5 mt-0.5">{pick.name}</p>
+          {closePrice != null && pick.priceAtPick && (
+            <div className="flex items-center gap-3 ml-5 mt-1.5">
+              <span className="text-[10px] text-(--text-secondary)">{formatCurrency(pick.priceAtPick)}</span>
+              <span className="text-[10px] text-(--text-secondary)">&#x2192;</span>
+              <span className="text-[10px] text-white">{formatCurrency(closePrice)}</span>
+              <span className={`text-[10px] font-mono ${(closePrice - pick.priceAtPick) >= 0 ? "text-(--up)" : "text-(--down)"}`}>({(closePrice - pick.priceAtPick) >= 0 ? "+" : ""}{formatCurrency(closePrice - pick.priceAtPick)})</span>
+            </div>
+          )}
+        </div>
+        {pick.return1d == null && <p className="text-xs text-(--text-secondary)/50 mt-1 ml-6 sm:ml-6">Awaiting next-day close data.</p>}
       </button>
 
       {expanded && scores && (
-        <div className="mx-4 mb-3 rounded-lg bg-(--surface-2)/50 border border-(--border) border-l-3 border-l-(--accent)/40 px-4 pb-5">
+        <div className="mx-2 sm:mx-4 mb-3 rounded-lg bg-(--surface-2)/50 border border-(--border) border-l-3 border-l-(--accent)/40 px-3 sm:px-4 pb-5">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 py-5">
             {/* LEFT COLUMN */}
             <div className="space-y-5">
@@ -322,10 +343,10 @@ function ExpandablePick({ pick, scores }: { pick: PicksAccuracySummary["recentPi
 
               <div>
                 <p className="text-xs text-(--text-secondary) uppercase tracking-wider mb-2">Risk Profile</p>
-                <div className="grid grid-cols-3 gap-2">
-                  <div className="rounded-lg bg-(--surface-1) border border-(--border) p-2 text-center"><p className="text-[9px] text-(--text-secondary) uppercase">Volatility</p><p className="text-sm font-semibold text-white">{scores.annualVolatility?.toFixed(1) ?? "--"}%</p></div>
-                  <div className="rounded-lg bg-(--surface-1) border border-(--border) p-2 text-center"><p className="text-[9px] text-(--text-secondary) uppercase">Sharpe</p><p className="text-sm font-semibold text-white">{scores.sharpeRatio?.toFixed(2) ?? "--"}</p></div>
-                  <div className="rounded-lg bg-(--surface-1) border border-(--border) p-2 text-center"><p className="text-[9px] text-(--text-secondary) uppercase">Max Drop</p><p className="text-sm font-semibold text-(--down)">{scores.maxDrawdownPct ? `-${scores.maxDrawdownPct.toFixed(1)}%` : "--"}</p></div>
+                <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
+                  <div className="rounded-lg bg-(--surface-1) border border-(--border) p-1.5 sm:p-2 text-center"><p className="text-[8px] sm:text-[9px] text-(--text-secondary) uppercase">Volatility</p><p className="text-xs sm:text-sm font-semibold text-white">{scores.annualVolatility?.toFixed(1) ?? "--"}%</p></div>
+                  <div className="rounded-lg bg-(--surface-1) border border-(--border) p-1.5 sm:p-2 text-center"><p className="text-[8px] sm:text-[9px] text-(--text-secondary) uppercase">Sharpe</p><p className="text-xs sm:text-sm font-semibold text-white">{scores.sharpeRatio?.toFixed(2) ?? "--"}</p></div>
+                  <div className="rounded-lg bg-(--surface-1) border border-(--border) p-1.5 sm:p-2 text-center"><p className="text-[8px] sm:text-[9px] text-(--text-secondary) uppercase">Max Drop</p><p className="text-xs sm:text-sm font-semibold text-(--down)">{scores.maxDrawdownPct ? `-${scores.maxDrawdownPct.toFixed(1)}%` : "--"}</p></div>
                 </div>
               </div>
 
@@ -342,11 +363,11 @@ function ExpandablePick({ pick, scores }: { pick: PicksAccuracySummary["recentPi
 
               <div>
                 <p className="text-xs text-(--text-secondary) uppercase tracking-wider mb-2">Key Fundamentals</p>
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="rounded-lg bg-(--surface-1) border border-(--border) p-2"><p className="text-[9px] text-(--text-secondary) uppercase">Target Price</p><p className="text-sm font-semibold text-white">{formatCurrency(scores.targetMean)}</p></div>
-                  <div className="rounded-lg bg-(--surface-1) border border-(--border) p-2"><p className="text-[9px] text-(--text-secondary) uppercase">Market Cap</p><p className="text-sm font-semibold text-white">{formatMarketCap(scores.marketCap)}</p></div>
-                  <div className="rounded-lg bg-(--surface-1) border border-(--border) p-2"><p className="text-[9px] text-(--text-secondary) uppercase">P/E Ratio</p><p className="text-sm font-semibold text-white">{scores.peRatio?.toFixed(1) ?? "--"}</p></div>
-                  <div className="rounded-lg bg-(--surface-1) border border-(--border) p-2"><p className="text-[9px] text-(--text-secondary) uppercase">Wall St.</p><p className="text-sm font-semibold text-white capitalize">{scores.recommendation?.replace("_", " ") ?? "--"}</p></div>
+                <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
+                  <div className="rounded-lg bg-(--surface-1) border border-(--border) p-1.5 sm:p-2"><p className="text-[8px] sm:text-[9px] text-(--text-secondary) uppercase">Target Price</p><p className="text-xs sm:text-sm font-semibold text-white">{formatCurrency(scores.targetMean)}</p></div>
+                  <div className="rounded-lg bg-(--surface-1) border border-(--border) p-1.5 sm:p-2"><p className="text-[8px] sm:text-[9px] text-(--text-secondary) uppercase">Market Cap</p><p className="text-xs sm:text-sm font-semibold text-white">{formatMarketCap(scores.marketCap)}</p></div>
+                  <div className="rounded-lg bg-(--surface-1) border border-(--border) p-1.5 sm:p-2"><p className="text-[8px] sm:text-[9px] text-(--text-secondary) uppercase">P/E Ratio</p><p className="text-xs sm:text-sm font-semibold text-white">{scores.peRatio?.toFixed(1) ?? "--"}</p></div>
+                  <div className="rounded-lg bg-(--surface-1) border border-(--border) p-1.5 sm:p-2"><p className="text-[8px] sm:text-[9px] text-(--text-secondary) uppercase">Wall St.</p><p className="text-xs sm:text-sm font-semibold text-white capitalize">{scores.recommendation?.replace("_", " ") ?? "--"}</p></div>
                 </div>
               </div>
             </div>
