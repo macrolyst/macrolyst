@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { formatCurrency } from "@/lib/format";
 import { ChangeBadge } from "@/components/ui/change-badge";
-import { useLivePrices } from "./trading/use-live-prices";
+import { useLivePrices, type Quote } from "./trading/use-live-prices";
 import {
   AreaChart,
   Area,
@@ -47,15 +47,6 @@ type EarningsPreview = {
   timing: string;
 };
 
-type SectorHeatmapItem = {
-  sector: string;
-  avgChange: number;
-  stockCount: number;
-  advancers: number;
-  color: string;
-  topStocks: { ticker: string; name: string | null; change1d: number | null; compositeScore: number | null }[];
-};
-
 const CHART_TICKERS = ["SPY", "QQQ", "DIA"];
 const CHART_LABELS: Record<string, string> = { SPY: "S&P 500", QQQ: "Nasdaq 100", DIA: "Dow Jones" };
 const DONUT_COLORS = ["#34D399", "#60A5FA", "#FBBF24", "#F87171", "#A78BFA", "#FB923C", "#94A3B8"];
@@ -69,13 +60,12 @@ function timeAgo(timestamp: number): string {
 }
 
 // --- Market Chart ---
-function MarketCharts() {
+function MarketCharts({ prices }: { prices: Map<string, Quote> }) {
   const [activeTicker, setActiveTicker] = useState("SPY");
   const [range, setRange] = useState(1);
   const [candles, setCandles] = useState<Candle[]>([]);
   const [fetchState, setFetchState] = useState<"loading" | "done">("loading");
 
-  const { prices } = useLivePrices(CHART_TICKERS);
   const quote = prices.get(activeTicker);
 
   const handleTickerChange = useCallback((t: string) => {
@@ -185,9 +175,7 @@ function MarketCharts() {
 }
 
 // --- Portfolio Snapshot ---
-function PortfolioSnapshot({ portfolio, holdings, reservedCash = 0 }: { portfolio: Portfolio | null; holdings: Holding[]; reservedCash?: number }) {
-  const tickers = holdings.map((h) => h.ticker);
-  const { prices } = useLivePrices(tickers);
+function PortfolioSnapshot({ portfolio, holdings, reservedCash = 0, prices }: { portfolio: Portfolio | null; holdings: Holding[]; reservedCash?: number; prices: Map<string, Quote> }) {
 
   if (!portfolio) {
     return (
@@ -471,18 +459,15 @@ const SECTOR_ETFS: { sector: string; etf: string; stockCount: number }[] = [
   { sector: "Materials", etf: "XLB", stockCount: 28 },
 ];
 
-function SectorHeatmap({ sectors }: { sectors: SectorHeatmapItem[] }) {
-  const { prices } = useLivePrices(SECTOR_ETFS.map((s) => s.etf));
+function SectorHeatmap({ prices }: { prices: Map<string, Quote> }) {
 
   const treemapData = SECTOR_ETFS.map((se) => {
     const liveQuote = prices.get(se.etf);
-    const serverData = sectors.find((s) => s.sector === se.sector);
-    const avgChange = liveQuote?.changePercent ?? serverData?.avgChange ?? 0;
     return {
       name: se.sector.replace("Information Technology", "Tech").replace("Communication Services", "Comms").replace("Consumer Discretionary", "Cons. Disc.").replace("Consumer Staples", "Cons. Stpls"),
       fullName: se.sector,
-      value: serverData?.stockCount ?? se.stockCount,
-      avgChange,
+      value: se.stockCount,
+      avgChange: liveQuote?.changePercent ?? 0,
     };
   }).sort((a, b) => b.avgChange - a.avgChange);
 
@@ -515,19 +500,25 @@ export function DashboardClient({
 }) {
   const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
+  // Single shared live prices hook for ALL dashboard components
+  const holdingTickers = holdings.map((h) => h.ticker);
+  const sectorEtfTickers = SECTOR_ETFS.map((s) => s.etf);
+  const allSymbols = [...new Set([...CHART_TICKERS, ...holdingTickers, ...sectorEtfTickers])];
+  const { prices, marketOpen } = useLivePrices(allSymbols);
+
   return (
     <div className="space-y-4">
       {/* TOP ROW: Portfolio + Market Charts side by side */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-stretch">
-        <PortfolioSnapshot portfolio={portfolio} holdings={holdings} reservedCash={reservedCash} />
-        <MarketCharts />
+        <PortfolioSnapshot portfolio={portfolio} holdings={holdings} reservedCash={reservedCash} prices={prices} />
+        <MarketCharts prices={prices} />
       </div>
 
       {/* Trending Tickers */}
       <TrendingTickers />
 
       {/* Sector Heatmap */}
-      <SectorHeatmap sectors={[]} />
+      <SectorHeatmap prices={prices} />
 
       {/* BOTTOM: Two columns */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
