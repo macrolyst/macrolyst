@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { formatCurrency } from "@/lib/format";
 import { ChangeBadge } from "@/components/ui/change-badge";
 import { useLivePrices } from "./trading/use-live-prices";
@@ -410,84 +410,89 @@ const renderTreemapCell = (props: any) => {
   const pct = avgChange ?? 0;
   return (
     <g fill="none" stroke="none">
-      <rect x={x} y={y} width={width} height={height} rx={4} fill={getHeatColor(pct)} stroke="#0a0f0d" strokeWidth={2} cursor="pointer" />
-      {width > 55 && height > 35 && (
+      <rect x={x} y={y} width={width} height={height} rx={4} fill={getHeatColor(pct)} stroke="#0a0f0d" strokeWidth={2} />
+      {width > 40 && height > 30 && (
         <>
-          <text x={x + width / 2} y={y + height / 2 - 7} textAnchor="middle" dominantBaseline="central" fontSize={width > 90 ? 11 : 9} fontWeight={600} style={TREEMAP_TEXT}>{name}</text>
-          <text x={x + width / 2} y={y + height / 2 + 9} textAnchor="middle" dominantBaseline="central" fontSize={width > 90 ? 13 : 10} fontWeight={700} style={TREEMAP_TEXT_MONO}>{pct >= 0 ? "+" : ""}{pct.toFixed(2)}%</text>
+          <text x={x + width / 2} y={y + height / 2 - 6} textAnchor="middle" dominantBaseline="central" fontSize={width > 80 ? 11 : width > 55 ? 9 : 7} fontWeight={600} style={TREEMAP_TEXT}>{name}</text>
+          <text x={x + width / 2} y={y + height / 2 + 8} textAnchor="middle" dominantBaseline="central" fontSize={width > 80 ? 13 : width > 55 ? 10 : 8} fontWeight={700} style={TREEMAP_TEXT_MONO}>{pct >= 0 ? "+" : ""}{pct.toFixed(2)}%</text>
         </>
       )}
-      {width <= 55 && width > 30 && height > 20 && (
-        <text x={x + width / 2} y={y + height / 2} textAnchor="middle" dominantBaseline="central" fontSize={8} fontWeight={600} style={TREEMAP_TEXT}>{pct >= 0 ? "+" : ""}{pct.toFixed(1)}%</text>
+      {width <= 40 && width > 20 && height > 18 && (
+        <text x={x + width / 2} y={y + height / 2} textAnchor="middle" dominantBaseline="central" fontSize={7} fontWeight={600} style={TREEMAP_TEXT}>{pct >= 0 ? "+" : ""}{pct.toFixed(1)}%</text>
       )}
     </g>
   );
 };
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
+function TreemapResponsive({ data }: { data: { name: string; fullName: string; value: number; avgChange: number }[] }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [width, setWidth] = useState(0);
+
+  useEffect(() => {
+    if (!ref.current) return;
+    const obs = new ResizeObserver((entries) => {
+      const w = Math.floor(entries[0].contentRect.width);
+      if (w > 0) setWidth(w);
+    });
+    obs.observe(ref.current);
+    return () => obs.disconnect();
+  }, []);
+
+  return (
+    <div ref={ref} style={{ width: "100%", height: 240 }}>
+      {width > 0 && (
+        <Treemap
+          width={width}
+          height={240}
+          data={data}
+          dataKey="value"
+          stroke="#0a0f0d"
+          content={renderTreemapCell}
+          nestIndexContent={() => null}
+          isAnimationActive={false}
+        />
+      )}
+    </div>
+  );
+}
+
+const SECTOR_ETFS: { sector: string; etf: string; stockCount: number }[] = [
+  { sector: "Information Technology", etf: "XLK", stockCount: 68 },
+  { sector: "Health Care", etf: "XLV", stockCount: 64 },
+  { sector: "Financials", etf: "XLF", stockCount: 73 },
+  { sector: "Consumer Discretionary", etf: "XLY", stockCount: 53 },
+  { sector: "Communication Services", etf: "XLC", stockCount: 23 },
+  { sector: "Industrials", etf: "XLI", stockCount: 79 },
+  { sector: "Consumer Staples", etf: "XLP", stockCount: 38 },
+  { sector: "Energy", etf: "XLE", stockCount: 23 },
+  { sector: "Utilities", etf: "XLU", stockCount: 31 },
+  { sector: "Real Estate", etf: "XLRE", stockCount: 31 },
+  { sector: "Materials", etf: "XLB", stockCount: 28 },
+];
+
 function SectorHeatmap({ sectors }: { sectors: SectorHeatmapItem[] }) {
-  const [selected, setSelected] = useState<string | null>(null);
+  const { prices } = useLivePrices(SECTOR_ETFS.map((s) => s.etf));
 
-  const treemapData = sectors.map((s) => ({
-    name: s.sector.replace("Information Technology", "Tech").replace("Communication Services", "Comms").replace("Consumer Discretionary", "Cons. Disc.").replace("Consumer Staples", "Cons. Stpls"),
-    fullName: s.sector,
-    value: Math.max(s.stockCount, 1),
-    avgChange: s.avgChange,
-  }));
-
-  const selectedSector = sectors.find((s) => s.sector === selected);
+  const treemapData = SECTOR_ETFS.map((se) => {
+    const liveQuote = prices.get(se.etf);
+    const serverData = sectors.find((s) => s.sector === se.sector);
+    const avgChange = liveQuote?.changePercent ?? serverData?.avgChange ?? 0;
+    return {
+      name: se.sector.replace("Information Technology", "Tech").replace("Communication Services", "Comms").replace("Consumer Discretionary", "Cons. Disc.").replace("Consumer Staples", "Cons. Stpls"),
+      fullName: se.sector,
+      value: serverData?.stockCount ?? se.stockCount,
+      avgChange,
+    };
+  }).sort((a, b) => b.avgChange - a.avgChange);
 
   return (
     <div className="card-glow p-5">
       <div className="flex items-center justify-between mb-3">
         <p className="text-xs text-(--text-secondary) uppercase tracking-wider">Sector Heatmap</p>
-        {selected && (
-          <button onClick={() => setSelected(null)} className="text-[10px] text-(--accent) hover:underline cursor-pointer">Clear</button>
-        )}
+        <span className="text-[10px] text-(--text-secondary)">Live via ETFs</span>
       </div>
-      <div style={{ width: "100%", height: 240 }}>
-        <ResponsiveContainer width="100%" height="100%">
-          <Treemap
-            data={treemapData}
-            dataKey="value"
-            stroke="#0a0f0d"
-            content={renderTreemapCell}
-            nestIndexContent={() => null}
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            onClick={(node: any) => {
-              if (node?.fullName) setSelected(node.fullName === selected ? null : node.fullName);
-            }}
-            isAnimationActive={false}
-          />
-        </ResponsiveContainer>
-      </div>
-
-      {selectedSector && (
-        <div className="mt-3 rounded-lg bg-(--surface-2) border border-(--border) p-3">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-medium text-white">{selectedSector.sector}</span>
-            <div className="flex items-center gap-3">
-              <span className="text-[10px] text-(--text-secondary)">{selectedSector.stockCount} stocks</span>
-              <span className="text-[10px] text-(--text-secondary)">{selectedSector.stockCount > 0 ? Math.round((selectedSector.advancers / selectedSector.stockCount) * 100) : 0}% advancing</span>
-              <ChangeBadge value={selectedSector.avgChange} className="text-xs font-bold" />
-            </div>
-          </div>
-          <div className="space-y-1">
-            {selectedSector.topStocks.map((st) => (
-              <div key={st.ticker} className="flex items-center justify-between py-1">
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-semibold text-white">{st.ticker}</span>
-                  <span className="text-[9px] text-(--text-secondary) truncate max-w-32">{st.name}</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <ChangeBadge value={st.change1d} className="text-[10px]" />
-                  {st.compositeScore != null && <span className="text-[9px] text-(--accent) font-mono">Score {st.compositeScore.toFixed(0)}</span>}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+      <TreemapResponsive data={treemapData} />
     </div>
   );
 }
@@ -524,7 +529,7 @@ export function DashboardClient({
       <TrendingTickers />
 
       {/* Sector Heatmap */}
-      {sectorHeatmap.length > 0 && <SectorHeatmap sectors={sectorHeatmap} />}
+      <SectorHeatmap sectors={sectorHeatmap} />
 
       {/* BOTTOM: Two columns */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
