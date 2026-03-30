@@ -1,19 +1,35 @@
+import { Redis } from "@upstash/redis";
+
 const FINNHUB_BASE = "https://finnhub.io/api/v1";
 const API_KEY = process.env.FINNHUB_API_KEY;
 
-const cache = new Map<string, { data: unknown; expires: number }>();
+// Shared Redis cache — works across all Vercel serverless instances
+const redis = process.env.UPSTASH_REDIS_REST_URL
+  ? new Redis({ url: process.env.UPSTASH_REDIS_REST_URL, token: process.env.UPSTASH_REDIS_REST_TOKEN! })
+  : null;
 
-function getCached<T>(key: string): T | null {
-  const entry = cache.get(key);
+// Fallback in-memory cache for local dev without Redis
+const memCache = new Map<string, { data: unknown; expires: number }>();
+
+async function getCached<T>(key: string): Promise<T | null> {
+  if (redis) {
+    const val = await redis.get<T>(key);
+    return val ?? null;
+  }
+  const entry = memCache.get(key);
   if (entry && Date.now() < entry.expires) return entry.data as T;
   return null;
 }
 
-function setCache(key: string, data: unknown, ttlMs: number) {
-  cache.set(key, { data, expires: Date.now() + ttlMs });
-  if (cache.size > 500) {
-    const oldest = cache.keys().next().value;
-    if (oldest) cache.delete(oldest);
+async function setCache(key: string, data: unknown, ttlMs: number) {
+  if (redis) {
+    await redis.set(key, data, { ex: Math.ceil(ttlMs / 1000) });
+  } else {
+    memCache.set(key, { data, expires: Date.now() + ttlMs });
+    if (memCache.size > 500) {
+      const oldest = memCache.keys().next().value;
+      if (oldest) memCache.delete(oldest);
+    }
   }
 }
 
@@ -31,7 +47,7 @@ export type Quote = {
 
 export async function getQuote(symbol: string): Promise<Quote | null> {
   const key = `quote:${symbol}`;
-  const cached = getCached<Quote>(key);
+  const cached = await getCached<Quote>(key);
   if (cached) return cached;
 
   try {
@@ -54,7 +70,7 @@ export async function getQuote(symbol: string): Promise<Quote | null> {
       previousClose: d.pc,
       timestamp: d.t,
     };
-    setCache(key, quote, 5000);
+    await setCache(key, quote, 15000);
     return quote;
   } catch {
     return null;
@@ -68,7 +84,7 @@ export type Candle = {
 
 export async function getCandles(symbol: string, days = 30): Promise<Candle[]> {
   const key = `candles:${symbol}:${days}`;
-  const cached = getCached<Candle[]>(key);
+  const cached = await getCached<Candle[]>(key);
   if (cached) return cached;
 
   try {
@@ -100,7 +116,7 @@ export async function getCandles(symbol: string, days = 30): Promise<Candle[]> {
       }
     }
 
-    setCache(key, candles, 300000); // 5 min cache
+    await setCache(key, candles, 300000); // 5 min cache
     return candles;
   } catch {
     return [];
@@ -122,7 +138,7 @@ export async function searchSymbol(query: string): Promise<SearchResult[]> {
   if (!query || query.length < 1) return [];
 
   const key = `search:${query.toLowerCase()}`;
-  const cached = getCached<SearchResult[]>(key);
+  const cached = await getCached<SearchResult[]>(key);
   if (cached) return cached;
 
   try {
@@ -140,7 +156,7 @@ export async function searchSymbol(query: string): Promise<SearchResult[]> {
         description: r.description,
         type: r.type,
       }));
-    setCache(key, results, 3600000);
+    await setCache(key, results, 3600000);
     return results;
   } catch {
     return [];
@@ -161,7 +177,7 @@ export type NewsArticle = {
 
 export async function getMarketNews(): Promise<NewsArticle[]> {
   const key = "market-news";
-  const cached = getCached<NewsArticle[]>(key);
+  const cached = await getCached<NewsArticle[]>(key);
   if (cached) return cached;
 
   try {
@@ -172,7 +188,7 @@ export async function getMarketNews(): Promise<NewsArticle[]> {
     if (!res.ok) return [];
     const articles: NewsArticle[] = await res.json();
     const result = articles.slice(0, 50);
-    setCache(key, result, 300000); // 5 min cache
+    await setCache(key, result, 300000); // 5 min cache
     return result;
   } catch {
     return [];

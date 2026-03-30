@@ -504,7 +504,7 @@ export function DashboardClient({
   const holdingTickers = holdings.map((h) => h.ticker);
   const sectorEtfTickers = SECTOR_ETFS.map((s) => s.etf);
   const allSymbols = [...new Set([...CHART_TICKERS, ...holdingTickers, ...sectorEtfTickers])];
-  const { prices, marketOpen } = useLivePrices(allSymbols);
+  const { prices } = useLivePrices(allSymbols);
 
   return (
     <div className="space-y-4">
