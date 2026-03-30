@@ -35,16 +35,24 @@ export function useLivePrices(symbols: string[]) {
   symbolsRef.current = symbols;
 
   // Bootstrap: fetch full quotes via REST (provides previousClose, open, high, low)
-  const fetchPrices = useCallback(async (retries = 2) => {
+  const abortRef = useRef<AbortController | null>(null);
+
+  const fetchPrices = useCallback(async (retries = 3) => {
     const syms = symbolsRef.current;
     if (syms.length === 0) {
       setLoading(false);
       return;
     }
+    // Abort any in-flight request
+    if (abortRef.current) abortRef.current.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+
     try {
-      const res = await fetch(`/api/prices/batch?symbols=${syms.join(",")}`);
+      const res = await fetch(`/api/prices/batch?symbols=${syms.join(",")}`, { signal: controller.signal });
       if (!res.ok) throw new Error("fetch failed");
       const quotes: Quote[] = await res.json();
+      if (controller.signal.aborted) return;
       setPrices((prev) => {
         const next = new Map(prev);
         for (const q of quotes) {
@@ -52,13 +60,14 @@ export function useLivePrices(symbols: string[]) {
         }
         return next;
       });
-    } catch {
-      if (retries > 0) {
-        setTimeout(() => fetchPrices(retries - 1), 2000);
-        return;
-      }
-    } finally {
       setLoading(false);
+    } catch (e) {
+      if ((e as Error).name === "AbortError") return;
+      if (retries > 0) {
+        setTimeout(() => fetchPrices(retries - 1), 1500);
+      } else {
+        setLoading(false);
+      }
     }
   }, []);
 
@@ -203,6 +212,7 @@ export function useLivePrices(symbols: string[]) {
       window.addEventListener("scroll", handleActivity);
 
       return () => {
+        if (abortRef.current) abortRef.current.abort();
         clearInterval(fallbackCheck);
         if (wsRetryRef.current) clearInterval(wsRetryRef.current);
         wsManager.removePriceListener(onPrice);
@@ -243,6 +253,7 @@ export function useLivePrices(symbols: string[]) {
       window.addEventListener("scroll", handleActivity);
 
       return () => {
+        if (abortRef.current) abortRef.current.abort();
         if (intervalRef.current) clearInterval(intervalRef.current);
         document.removeEventListener("visibilitychange", handleVisibility);
         window.removeEventListener("mousemove", handleActivity);
