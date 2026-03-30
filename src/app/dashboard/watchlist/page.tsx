@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { getWatchlist } from "@/lib/actions/watchlist";
 import { WatchlistView } from "./watchlist-view";
 

@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { getLatestRun, getMarketSummary, getScannerResults, getEarningsEvents, getSectorPerformance, getStockScores } from "@/lib/db/queries";
 import { getPortfolio, getHoldings } from "@/lib/actions/trading";
 import { getPendingOrders } from "@/lib/actions/orders";

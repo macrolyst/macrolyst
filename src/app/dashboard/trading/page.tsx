@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { getPortfolio, getHoldings, getTradeHistory } from "@/lib/actions/trading";
 import { getPendingOrders } from "@/lib/actions/orders";
 import { getWatchlist } from "@/lib/actions/watchlist";
