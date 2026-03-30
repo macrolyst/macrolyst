@@ -3,7 +3,8 @@ import { db } from "@/lib/db";
 import { stockScores, analysisRuns } from "@/lib/db/schema";
 import { eq, and, gte, lte, gt, lt, desc, sql } from "drizzle-orm";
 
-const NUM_COLS: Record<string, typeof stockScores.rsi> = {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const NUM_COLS: Record<string, any> = {
   rsi: stockScores.rsi,
   macdHist: stockScores.macdHist,
   volRatio: stockScores.volRatio,
@@ -23,7 +24,8 @@ const NUM_COLS: Record<string, typeof stockScores.rsi> = {
   upsidePct: stockScores.upsidePct,
 };
 
-const TEXT_COLS: Record<string, typeof stockScores.sector> = {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const TEXT_COLS: Record<string, any> = {
   sector: stockScores.sector,
   recommendation: stockScores.recommendation,
 };
