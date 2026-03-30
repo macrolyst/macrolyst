@@ -35,7 +35,7 @@ export function useLivePrices(symbols: string[]) {
   symbolsRef.current = symbols;
 
   // Bootstrap: fetch full quotes via REST (provides previousClose, open, high, low)
-  const fetchPrices = useCallback(async () => {
+  const fetchPrices = useCallback(async (retries = 2) => {
     const syms = symbolsRef.current;
     if (syms.length === 0) {
       setLoading(false);
@@ -43,7 +43,7 @@ export function useLivePrices(symbols: string[]) {
     }
     try {
       const res = await fetch(`/api/prices/batch?symbols=${syms.join(",")}`);
-      if (!res.ok) return;
+      if (!res.ok) throw new Error("fetch failed");
       const quotes: Quote[] = await res.json();
       setPrices((prev) => {
         const next = new Map(prev);
@@ -53,7 +53,10 @@ export function useLivePrices(symbols: string[]) {
         return next;
       });
     } catch {
-      // Silently fail, will retry
+      if (retries > 0) {
+        setTimeout(() => fetchPrices(retries - 1), 2000);
+        return;
+      }
     } finally {
       setLoading(false);
     }
@@ -115,17 +118,31 @@ export function useLivePrices(symbols: string[]) {
       const onPrice = (symbol: string, price: number, _volume: number, timestamp: number) => {
         setPrices((prev) => {
           const existing = prev.get(symbol);
-          if (!existing) return prev;
           const next = new Map(prev);
-          next.set(symbol, {
-            ...existing,
-            price,
-            change: price - existing.previousClose,
-            changePercent: existing.previousClose
-              ? ((price - existing.previousClose) / existing.previousClose) * 100
-              : 0,
-            timestamp,
-          });
+          if (existing) {
+            next.set(symbol, {
+              ...existing,
+              price,
+              change: price - existing.previousClose,
+              changePercent: existing.previousClose
+                ? ((price - existing.previousClose) / existing.previousClose) * 100
+                : 0,
+              timestamp,
+            });
+          } else {
+            // No REST data yet — store what we have from WebSocket
+            next.set(symbol, {
+              symbol,
+              price,
+              change: 0,
+              changePercent: 0,
+              high: price,
+              low: price,
+              open: price,
+              previousClose: price,
+              timestamp,
+            });
+          }
           return next;
         });
       };
