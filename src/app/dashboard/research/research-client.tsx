@@ -448,7 +448,7 @@ function ResearchReport({ data, onBack }: { data: ResearchPayload; onBack: () =>
         <div className="card-glow p-5">
           <p className="text-xs text-(--text-secondary) uppercase tracking-wider mb-3">Peer Comparison</p>
           <div className="space-y-1.5 sm:space-y-0 sm:flex sm:flex-wrap sm:gap-2">
-            {peers.map((p: { ticker: string; price: number; changePercent: number }) => (
+            {peers.filter(Boolean).map((p: { ticker: string; price: number; changePercent: number }) => (
               <div key={p.ticker} className="rounded-lg bg-(--surface-2) border border-(--border) px-3 py-2 flex items-center justify-between sm:justify-start gap-3">
                 <span className="text-sm font-semibold text-white">{p.ticker}</span>
                 <div className="flex items-center gap-2">
