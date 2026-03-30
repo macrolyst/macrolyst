@@ -4,7 +4,7 @@ import { getWatchlist } from "@/lib/actions/watchlist";
 import { WatchlistView } from "./watchlist-view";
 
 export default async function WatchlistPage() {
-  const items = await getWatchlist();
+  const items = await getWatchlist().catch(() => []);
 
   return (
     <div className="space-y-6">

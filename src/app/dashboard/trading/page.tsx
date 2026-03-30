@@ -8,7 +8,7 @@ import { PortfolioSetup } from "./portfolio-setup";
 import { TradingView } from "./trading-view";
 
 export default async function PaperTradingPage() {
-  const portfolio = await getPortfolio();
+  const portfolio = await getPortfolio().catch(() => null);
 
   if (!portfolio) {
     return (

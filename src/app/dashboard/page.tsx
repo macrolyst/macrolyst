@@ -17,13 +17,19 @@ const SCANNER_LABELS: Record<string, string> = {
 };
 
 export default async function DashboardPage() {
-  const [portfolio, run] = await Promise.all([
-    getPortfolio(),
+  // Fetch auth-independent data alongside auth-dependent data
+  // Auth failures should NOT block analysis data from loading
+  const [portfolioResult, run] = await Promise.all([
+    getPortfolio().catch(() => null),
     getLatestRun(),
   ]);
+  const portfolio = portfolioResult;
 
   const [holdings, pendingOrders] = portfolio
-    ? await Promise.all([getHoldings(portfolio.id), getPendingOrders(portfolio.id)])
+    ? await Promise.all([
+        getHoldings(portfolio.id).catch(() => []),
+        getPendingOrders(portfolio.id).catch(() => []),
+      ])
     : [[], []];
 
   // Fetch analysis data if available
