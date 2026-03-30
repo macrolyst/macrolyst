@@ -1,6 +1,6 @@
 export const dynamic = "force-dynamic";
 
-import { getLatestRun, getMarketSummary, getScannerResults, getEarningsEvents, getSectorPerformance, getStockScores } from "@/lib/db/queries";
+import { getLatestRun, getMarketSummary, getScannerResults, getEarningsEvents } from "@/lib/db/queries";
 import { getPortfolio, getHoldings } from "@/lib/actions/trading";
 import { getPendingOrders } from "@/lib/actions/orders";
 import { DashboardClient } from "./dashboard-client";
@@ -36,15 +36,11 @@ export default async function DashboardPage() {
   let marketMood = null;
   let scannerPreviews: { type: string; label: string; count: number; tickers: string[] }[] = [];
   let earningsPreviews: { ticker: string; name: string; eventDate: string; timing: string }[] = [];
-  let sectorHeatmap: { sector: string; avgChange: number; stockCount: number; advancers: number; color: string; topStocks: { ticker: string; name: string | null; change1d: number | null; compositeScore: number | null }[] }[] = [];
-
   if (run) {
-    const [summary, scanners, earnings, sectors, allStocks] = await Promise.all([
+    const [summary, scanners, earnings] = await Promise.all([
       getMarketSummary(run.id),
       getScannerResults(run.id),
       getEarningsEvents(run.id),
-      getSectorPerformance(run.id),
-      getStockScores(run.id),
     ]);
 
     if (summary) {
@@ -82,31 +78,6 @@ export default async function DashboardPage() {
       eventDate: e.eventDate ? new Date(e.eventDate).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "",
       timing: "",
     }));
-
-    // Sector heatmap — top 5 stocks per sector by composite score
-    if (sectors.length > 0) {
-      const stocksBySector = new Map<string, typeof allStocks>();
-      for (const s of allStocks) {
-        if (!s.sector) continue;
-        const list = stocksBySector.get(s.sector) || [];
-        list.push(s);
-        stocksBySector.set(s.sector, list);
-      }
-      sectorHeatmap = sectors
-        .filter((s) => s.sector && s.avgChange !== null)
-        .map((s) => ({
-          sector: s.sector,
-          avgChange: s.avgChange ?? 0,
-          stockCount: s.stockCount ?? 0,
-          advancers: s.advancers ?? 0,
-          color: s.color ?? "#6B7280",
-          topStocks: (stocksBySector.get(s.sector) || [])
-            .sort((a, b) => (b.compositeScore ?? 0) - (a.compositeScore ?? 0))
-            .slice(0, 5)
-            .map((st) => ({ ticker: st.ticker, name: st.name, change1d: st.change1d, compositeScore: st.compositeScore })),
-        }))
-        .sort((a, b) => b.avgChange - a.avgChange);
-    }
   }
 
   return (
@@ -128,7 +99,6 @@ export default async function DashboardPage() {
         marketMood={marketMood}
         scannerPreviews={scannerPreviews}
         earningsPreviews={earningsPreviews}
-        sectorHeatmap={sectorHeatmap}
       />
     </div>
   );

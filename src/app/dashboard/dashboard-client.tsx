@@ -505,7 +505,6 @@ export function DashboardClient({
   marketMood,
   scannerPreviews,
   earningsPreviews,
-  sectorHeatmap = [],
 }: {
   portfolio: Portfolio | null;
   holdings: Holding[];
@@ -513,7 +512,6 @@ export function DashboardClient({
   marketMood: { breadth: string; vix: number | null; avgChange: number | null } | null;
   scannerPreviews: ScannerPreview[];
   earningsPreviews: EarningsPreview[];
-  sectorHeatmap?: SectorHeatmapItem[];
 }) {
   const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
@@ -529,7 +527,7 @@ export function DashboardClient({
       <TrendingTickers />
 
       {/* Sector Heatmap */}
-      <SectorHeatmap sectors={sectorHeatmap} />
+      <SectorHeatmap sectors={[]} />
 
       {/* BOTTOM: Two columns */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
