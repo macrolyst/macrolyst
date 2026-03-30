@@ -406,7 +406,7 @@ const TREEMAP_TEXT_MONO: React.CSSProperties = { fill: "#ffffff", color: "#fffff
 
 const renderTreemapCell = (props: any) => {
   const { x, y, width, height, name, avgChange, depth } = props;
-  if (!width || !height || width < 2 || height < 2 || depth > 1) return null;
+  if (!width || !height || width < 2 || height < 2 || depth > 1) return <g />;
   const pct = avgChange ?? 0;
   return (
     <g fill="none" stroke="none">
