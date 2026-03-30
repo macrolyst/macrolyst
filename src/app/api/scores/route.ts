@@ -60,6 +60,11 @@ export async function GET(request: NextRequest) {
       sectorRank: row.sectorRank,
       sectorCount: row.sectorCount,
       sectorPeAvg: num(row.sectorPeAvg),
+      scoreMeanReversion: num(row.scoreMeanReversion),
+      scoreRelativeStrength: num(row.scoreRelativeStrength),
+      scoreSectorRotation: num(row.scoreSectorRotation),
+      scoreRiskQuality: num(row.scoreRiskQuality),
+      scoreEarningsEdge: num(row.scoreEarningsEdge),
       reasons: row.reasons,
       recommendation: row.recommendation,
     };

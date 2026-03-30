@@ -125,6 +125,11 @@ export type StockScore = {
   scoreMomentum: number | null;
   scoreVolume: number | null;
   scoreNews: number | null;
+  scoreMeanReversion: number | null;
+  scoreRelativeStrength: number | null;
+  scoreSectorRotation: number | null;
+  scoreRiskQuality: number | null;
+  scoreEarningsEdge: number | null;
   rsi: number | null;
   macdHist: number | null;
   sma50: number | null;
@@ -174,6 +179,11 @@ async function _getStockScores(runId: number, limit?: number): Promise<StockScor
     scoreMomentum: num(r.scoreMomentum),
     scoreVolume: num(r.scoreVolume),
     scoreNews: num(r.scoreNews),
+    scoreMeanReversion: num(r.scoreMeanReversion),
+    scoreRelativeStrength: num(r.scoreRelativeStrength),
+    scoreSectorRotation: num(r.scoreSectorRotation),
+    scoreRiskQuality: num(r.scoreRiskQuality),
+    scoreEarningsEdge: num(r.scoreEarningsEdge),
     rsi: num(r.rsi),
     macdHist: num(r.macdHist),
     sma50: num(r.sma50),

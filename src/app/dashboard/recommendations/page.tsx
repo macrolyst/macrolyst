@@ -26,13 +26,18 @@ export default async function RecommendationsPage() {
       {/* Methodology */}
       <div className="card-glow p-6">
         <p className="text-xs text-(--text-secondary) uppercase tracking-wider mb-3">Methodology</p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 text-sm">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 text-sm">
           {[
-            { label: "Analyst Upside", weight: "30%", desc: "Distance to mean analyst target" },
-            { label: "Technical", weight: "25%", desc: "RSI, MACD, Bollinger, moving averages" },
-            { label: "Momentum", weight: "20%", desc: "1-day, 5-day, 20-day price changes" },
-            { label: "News Sentiment", weight: "15%", desc: "Aggregate sentiment from recent headlines" },
-            { label: "Volume", weight: "10%", desc: "Volume spike vs 20-day average" },
+            { label: "Technical", weight: "20%", desc: "RSI, MACD, dual MA, Bollinger, 52-week range" },
+            { label: "Mean Reversion", weight: "15%", desc: "Oversold bounce detection with fundamental support" },
+            { label: "Relative Strength", weight: "12%", desc: "Performance vs SPY benchmark" },
+            { label: "Momentum", weight: "10%", desc: "5d/20d price momentum with chase penalty" },
+            { label: "Volume Confirmed", weight: "10%", desc: "Volume confirming price direction" },
+            { label: "Sector Rotation", weight: "8%", desc: "Favor outperforming sectors" },
+            { label: "Analyst Upside", weight: "8%", desc: "Analyst targets with confidence weighting" },
+            { label: "Risk Quality", weight: "7%", desc: "Volatility, Sharpe, drawdown, dividends" },
+            { label: "News Sentiment", weight: "5%", desc: "Recency-weighted headline sentiment" },
+            { label: "Earnings Edge", weight: "5%", desc: "Beat history and earnings proximity risk" },
           ].map((item) => (
             <div key={item.label}>
               <div className="flex items-baseline gap-2 mb-1">

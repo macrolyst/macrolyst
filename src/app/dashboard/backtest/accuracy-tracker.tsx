@@ -13,6 +13,11 @@ type ScoreData = {
   scoreMomentum: number | null;
   scoreVolume: number | null;
   scoreNews: number | null;
+  scoreMeanReversion: number | null;
+  scoreRelativeStrength: number | null;
+  scoreSectorRotation: number | null;
+  scoreRiskQuality: number | null;
+  scoreEarningsEdge: number | null;
   rsi: number | null;
   macdHist: number | null;
   sma50: number | null;
@@ -320,11 +325,16 @@ function ExpandablePick({ pick, scores }: { pick: PicksAccuracySummary["recentPi
                   <span className="text-sm font-bold text-(--accent)">{scores.compositeScore?.toFixed(0) ?? "--"}</span>
                 </div>
                 <div className="space-y-1.5">
-                  <ScoreBar label="Analyst" value={scores.scoreAnalyst} color="#60A5FA" />
                   <ScoreBar label="Technical" value={scores.scoreTechnical} color="#A78BFA" />
+                  {scores.scoreMeanReversion != null && <ScoreBar label="Mean Reversion" value={scores.scoreMeanReversion} color="#F87171" />}
+                  {scores.scoreRelativeStrength != null && <ScoreBar label="Rel. Strength" value={scores.scoreRelativeStrength} color="#38BDF8" />}
                   <ScoreBar label="Momentum" value={scores.scoreMomentum} color="#34D399" />
                   <ScoreBar label="Volume" value={scores.scoreVolume} color="#FBBF24" />
+                  {scores.scoreSectorRotation != null && <ScoreBar label="Sector Rot." value={scores.scoreSectorRotation} color="#C084FC" />}
+                  <ScoreBar label="Analyst" value={scores.scoreAnalyst} color="#60A5FA" />
+                  {scores.scoreRiskQuality != null && <ScoreBar label="Risk Quality" value={scores.scoreRiskQuality} color="#2DD4BF" />}
                   <ScoreBar label="News" value={scores.scoreNews} color="#F472B6" />
+                  {scores.scoreEarningsEdge != null && <ScoreBar label="Earnings Edge" value={scores.scoreEarningsEdge} color="#FB923C" />}
                 </div>
               </div>
 

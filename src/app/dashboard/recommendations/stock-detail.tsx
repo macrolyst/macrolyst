@@ -106,11 +106,16 @@ export function StockDetail({ stock }: { stock: StockScore }) {
           <div>
             <p className="text-xs text-(--text-secondary) uppercase tracking-wider mb-3">Score Breakdown</p>
             <div className="space-y-2">
-              <ScoreBar label="Analyst" value={stock.scoreAnalyst} color="#60A5FA" />
               <ScoreBar label="Technical" value={stock.scoreTechnical} color="#A78BFA" />
+              {stock.scoreMeanReversion != null && <ScoreBar label="Mean Reversion" value={stock.scoreMeanReversion} color="#F87171" />}
+              {stock.scoreRelativeStrength != null && <ScoreBar label="Rel. Strength" value={stock.scoreRelativeStrength} color="#38BDF8" />}
               <ScoreBar label="Momentum" value={stock.scoreMomentum} color="#34D399" />
               <ScoreBar label="Volume" value={stock.scoreVolume} color="#FBBF24" />
+              {stock.scoreSectorRotation != null && <ScoreBar label="Sector Rot." value={stock.scoreSectorRotation} color="#C084FC" />}
+              <ScoreBar label="Analyst" value={stock.scoreAnalyst} color="#60A5FA" />
+              {stock.scoreRiskQuality != null && <ScoreBar label="Risk Quality" value={stock.scoreRiskQuality} color="#2DD4BF" />}
               <ScoreBar label="News" value={stock.scoreNews} color="#F472B6" />
+              {stock.scoreEarningsEdge != null && <ScoreBar label="Earnings Edge" value={stock.scoreEarningsEdge} color="#FB923C" />}
             </div>
           </div>
 

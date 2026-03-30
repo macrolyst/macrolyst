@@ -53,6 +53,8 @@ export const marketSummary = pgTable("market_summary", {
   treasury10y: decimal("treasury_10y", { precision: 5, scale: 2 }),
   treasury2y: decimal("treasury_2y", { precision: 5, scale: 2 }),
   fedFunds: decimal("fed_funds", { precision: 5, scale: 2 }),
+  regimeScore: decimal("regime_score", { precision: 5, scale: 1 }),
+  regimeLabel: text("regime_label"),
 });
 
 export const sectorPerformance = pgTable("sector_performance", {
@@ -86,6 +88,11 @@ export const stockScores = pgTable(
     scoreMomentum: decimal("score_momentum", { precision: 5, scale: 1 }),
     scoreVolume: decimal("score_volume", { precision: 5, scale: 1 }),
     scoreNews: decimal("score_news", { precision: 5, scale: 1 }),
+    scoreMeanReversion: decimal("score_mean_reversion", { precision: 5, scale: 1 }),
+    scoreRelativeStrength: decimal("score_relative_strength", { precision: 5, scale: 1 }),
+    scoreSectorRotation: decimal("score_sector_rotation", { precision: 5, scale: 1 }),
+    scoreRiskQuality: decimal("score_risk_quality", { precision: 5, scale: 1 }),
+    scoreEarningsEdge: decimal("score_earnings_edge", { precision: 5, scale: 1 }),
     rsi: decimal({ precision: 6, scale: 2 }),
     macdHist: decimal("macd_hist", { precision: 10, scale: 4 }),
     sma50: decimal("sma_50", { precision: 10, scale: 2 }),
