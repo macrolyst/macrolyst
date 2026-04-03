@@ -32,7 +32,12 @@ export function formatMarketCap(value: number | null): string {
 
 export function formatDate(date: string | Date | null): string {
   if (!date) return "--";
-  const d = typeof date === "string" ? new Date(date) : date;
+  // Date-only strings ("YYYY-MM-DD") are parsed as UTC by JS, which shifts
+  // back a day when formatted in US timezones. Append T12:00:00 to avoid this.
+  const d =
+    typeof date === "string"
+      ? new Date(date.includes("T") ? date : `${date}T12:00:00`)
+      : date;
   return d.toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
@@ -43,7 +48,10 @@ export function formatDate(date: string | Date | null): string {
 
 export function formatDateTime(date: string | Date | null): string {
   if (!date) return "--";
-  const d = typeof date === "string" ? new Date(date) : date;
+  const d =
+    typeof date === "string"
+      ? new Date(date.includes("T") ? date : `${date}T12:00:00`)
+      : date;
   return d.toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",

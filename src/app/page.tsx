@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth/server";
+import { cookies } from "next/headers";
 
 export const dynamic = "force-dynamic";
 import { Navbar } from "@/components/landing/navbar";
@@ -48,8 +48,11 @@ export const metadata: Metadata = {
 };
 
 export default async function Home() {
-  const session = await auth.getSession();
-  if (session?.data?.user) redirect("/dashboard");
+  const cookieStore = await cookies();
+  const hasSession =
+    cookieStore.has("__Secure-neon-auth.session_token") ||
+    cookieStore.has("neon-auth.session_token");
+  if (hasSession) redirect("/dashboard");
 
   return (
     <div className="noise min-h-screen bg-(--surface-0)">
